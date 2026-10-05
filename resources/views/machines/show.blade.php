@@ -3,6 +3,9 @@
         <x-page-header :title="$machine->sku.' · '.$machine->displayName()"
                        :subtitle="$machine->machineType->label().' · '.$machine->site->code.' '.$machine->site->name">
             <x-active-badge :active="$machine->is_active" />
+            @if ($canIssue)
+                <a href="{{ route('issues.create', ['machine' => $machine->id]) }}" class="btn-primary">{{ __('Issue to :sku', ['sku' => $machine->sku]) }}</a>
+            @endif
             @can('update', $machine)
                 <a href="{{ route('machines.edit', $machine) }}" class="btn-secondary">{{ __('Edit') }}</a>
             @endcan
@@ -32,6 +35,7 @@
                             <th class="num">{{ __('Qty / machine') }}</th>
                             <th class="num">{{ __('In stock') }}</th>
                             <th>{{ __('Bin') }}</th>
+                            @if ($canIssue)<th></th>@endif
                         </tr>
                     </thead>
                     <tbody>
@@ -56,18 +60,30 @@
                                     {{ \App\Support\Format::qty($stock?->qty ?? 0) }} {{ $line->item->uom }}
                                 </td>
                                 <td>{{ $stock?->bin ?? '—' }}</td>
+                                @if ($canIssue)
+                                    <td class="text-right">
+                                        @if ($stock && bccomp($stock->qty, '0', 3) > 0)
+                                            <a class="link text-sm" href="{{ route('issues.create', ['machine' => $machine->id, 'item' => $line->item_id]) }}">{{ __('Issue') }}</a>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-gray-500">{{ __('No parts are listed for this type and revision yet.') }}</td></tr>
+                            <tr><td colspan="7" class="text-gray-500">{{ __('No parts are listed for this type and revision yet.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <section class="card card-body">
-            <h3 class="card-title">{{ __('Consumption history') }}</h3>
-            <p class="mt-1 text-sm text-gray-500">{{ __('Stock issued to this machine will be listed here once stock movements are recorded.') }}</p>
+        <section class="card" id="history">
+            <div class="card-body pb-2 flex flex-wrap items-baseline justify-between gap-2">
+                <h3 class="card-title">{{ __('Consumption history') }}</h3>
+                <p class="text-sm text-gray-600">
+                    {{ __('Last 90 days: :n issues, :value USD', ['n' => $last90->movements, 'value' => \App\Support\Format::money($last90->value)]) }}
+                </p>
+            </div>
+            @include('stock._ledger', ['transactions' => $consumption, 'showItem' => true])
         </section>
     </x-page>
 </x-app-layout>

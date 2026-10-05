@@ -16,11 +16,11 @@ class MainNavigation extends Component
     {
         $this->links = collect(config('navigation'))
             ->filter(fn (array $link) => Route::has($link['route']))
-            ->filter(fn (array $link) => ! isset($link['can']) || Gate::allows($link['can'], $link['model']))
+            ->filter(fn (array $link) => ! isset($link['can']) || Gate::allows($link['can'], $link['model'] ?? []))
             ->map(fn (array $link) => [
                 'route' => $link['route'],
                 'label' => $link['label'],
-                'active' => request()->routeIs(preg_replace('/\.index$/', '', $link['route']).'*'),
+                'active' => request()->routeIs(preg_replace('/\.(index|create)$/', '', $link['route']).'*'),
             ])
             ->values()
             ->all();

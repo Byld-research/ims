@@ -6,6 +6,7 @@ use App\Enums\ReasonCodeScope;
 use App\Enums\TransactionType;
 use App\Exceptions\StockException;
 use App\Models\Item;
+use App\Models\Machine;
 use App\Models\PurchaseOrderLine;
 use App\Models\ReasonCode;
 use App\Models\Site;
@@ -15,6 +16,7 @@ use App\Models\StockTransaction;
 use App\Models\User;
 use App\Support\Decimal;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
@@ -75,6 +77,103 @@ class StockService
             }
 
             return $transaction;
+        }, self::ATTEMPTS);
+    }
+
+    /**
+     * Stock consumed by a machine, at the site where the machine currently is (SPEC 5.2, 5.8).
+     */
+    public function issueToMachine(Item $item, Machine $machine, string $qty, User $user, ?string $note = null): StockTransaction
+    {
+        return DB::transaction(function () use ($item, $machine, $qty, $user, $note) {
+            // Re-read under lock: the machine may have been relocated or deactivated since the form was opened.
+            $machine = Machine::query()->with('site')->whereKey($machine->id)->sharedLock()->firstOrFail();
+
+            if (! $machine->is_active) {
+                throw new StockException(__('Machine :sku is inactive; stock cannot be issued to it.', ['sku' => $machine->sku]));
+            }
+
+            return $this->post(
+                type: TransactionType::IssueMachine,
+                item: $item,
+                site: $machine->site,
+                qtyDelta: Decimal::negate($this->positive($qty)),
+                user: $user,
+                incomingCost: null,
+                references: ['machine_id' => $machine->id, 'note' => $note],
+            );
+        }, self::ATTEMPTS);
+    }
+
+    /**
+     * Stock consumed outside any machine: workshop, building, samples (SPEC 1a, 5.2).
+     */
+    public function issueGeneral(Item $item, Site $site, string $qty, ReasonCode $reason, User $user, ?string $note = null): StockTransaction
+    {
+        if ($reason->applies_to !== ReasonCodeScope::IssueGeneral) {
+            throw new InvalidArgumentException('A general issue needs a general-issue reason code.');
+        }
+
+        return DB::transaction(fn () => $this->post(
+            type: TransactionType::IssueGeneral,
+            item: $item,
+            site: $site,
+            qtyDelta: Decimal::negate($this->positive($qty)),
+            user: $user,
+            incomingCost: null,
+            references: ['reason_code_id' => $reason->id, 'note' => $note],
+        ), self::ATTEMPTS);
+    }
+
+    /**
+     * Site-to-site transfer in one step, entered by the receiving site on arrival (SPEC 3.7, 5.2).
+     *
+     * TRANSFER_OUT at the sender is valued at the sender's average; TRANSFER_IN at the receiver
+     * enters at that same unit cost and feeds the receiver's average.
+     *
+     * @return array{out: StockTransaction, in: StockTransaction}
+     */
+    public function transfer(Item $item, Site $from, Site $to, string $qty, User $user, ?string $note = null): array
+    {
+        if ($from->id === $to->id) {
+            throw new InvalidArgumentException('A transfer needs two different sites.');
+        }
+
+        $qty = $this->positive($qty);
+
+        return DB::transaction(function () use ($item, $from, $to, $qty, $user, $note) {
+            // Both rows locked in site id order, so opposite transfers cannot deadlock each other.
+            foreach (collect([$from, $to])->sortBy('id') as $site) {
+                $this->lockedStock($item, $site);
+            }
+
+            $group = (string) Str::uuid();
+
+            try {
+                $out = $this->post(
+                    type: TransactionType::TransferOut,
+                    item: $item,
+                    site: $from,
+                    qtyDelta: Decimal::negate($qty),
+                    user: $user,
+                    incomingCost: null,
+                    references: ['counter_site_id' => $to->id, 'transfer_group' => $group, 'note' => $note],
+                );
+            } catch (StockException $e) {
+                throw StockException::insufficientForTransfer($e->getMessage(), $from->code);
+            }
+
+            $in = $this->post(
+                type: TransactionType::TransferIn,
+                item: $item,
+                site: $to,
+                qtyDelta: $qty,
+                user: $user,
+                incomingCost: $out->unit_cost,
+                references: ['counter_site_id' => $from->id, 'transfer_group' => $group, 'note' => $note],
+            );
+
+            return ['out' => $out, 'in' => $in];
         }, self::ATTEMPTS);
     }
 

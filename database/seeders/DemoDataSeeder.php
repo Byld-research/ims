@@ -5,16 +5,19 @@ namespace Database\Seeders;
 use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Item;
+use App\Models\Machine;
 use App\Models\MachineType;
 use App\Models\PurchaseOrder;
 use App\Models\ReasonCode;
 use App\Models\Site;
 use App\Models\Stock;
+use App\Models\StockTransaction;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\PurchaseOrderService;
 use App\Services\StockService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -181,24 +184,51 @@ class DemoDataSeeder extends Seeder
     }
 
     /**
-     * Opening balances through StockService (reason OPENING, cost from the supplier price),
-     * plus min levels and kanban settings. Some items are deliberately short.
-     * Skipped per item and site once any movement exists, so re-running adds nothing.
+     * Consumption over the last 120 days, so machine histories and the dashboard have data.
+     * [days ago, site, sku, qty, machine SKU or general-issue reason code]
+     */
+    private const CONSUMPTION = [
+        [100, 'BPC002', 'SP-10001', 1, '004C'], [70, 'BPC002', 'SP-10001', 1, '004C'], [40, 'BPC002', 'SP-10001', 1, '004C'], [12, 'BPC002', 'SP-10001', 1, '004C'],
+        [100, 'BPC002', 'CS-30001', 2, '004C'], [80, 'BPC002', 'CS-30001', 2, '004C'], [60, 'BPC002', 'CS-30001', 2, '004C'],
+        [40, 'BPC002', 'CS-30001', 2, '004C'], [20, 'BPC002', 'CS-30001', 2, '004C'], [5, 'BPC002', 'CS-30001', 2, '004C'],
+        [90, 'BPC002', 'CS-30003', 2, '004C'], [60, 'BPC002', 'CS-30003', 2, '004C'], [30, 'BPC002', 'CS-30003', 2, '004C'], [25, 'BPC002', 'CS-30003', 2, 'MAINTENANCE'],
+        [85, 'BPC002', 'WP-20001', 1, '003A'], [50, 'BPC002', 'WP-20001', 1, '003A'], [15, 'BPC002', 'WP-20001', 1, '003A'],
+        [60, 'BPC002', 'CS-30002', 20, '003A'],
+        [75, 'BPC002', 'CS-30004', 50, '008W'], [20, 'BPC002', 'CS-30004', 40, '009W'],
+        [95, 'BPC001', 'SP-10001', 1, '003C'], [45, 'BPC001', 'SP-10001', 1, '003C'],
+        [90, 'BPC001', 'CS-30001', 2, '003C'], [50, 'BPC001', 'CS-30001', 2, '003C'], [10, 'BPC001', 'CS-30001', 2, '003C'],
+        [30, 'BPC001', 'SP-10004', 1, '003C'],
+        [60, 'BPC001', 'WP-20002', 1, '004A'], [20, 'BPC001', 'WP-20002', 1, '005A'],
+        [40, 'BPC001', 'CS-30002', 20, '004A'],
+        [33, 'BPC001', 'CS-30004', 30, '004B'], [15, 'BPC001', 'CS-30004', 20, 'FACILITY'],
+    ];
+
+    /**
+     * Opening balances 120 days ago through StockService (reason OPENING, cost from the supplier
+     * price), then the consumption above, then one transfer. Opening quantities are the final
+     * quantities plus what was consumed, so the final state is as listed. Some items are
+     * deliberately short. Skipped once any movement exists, so re-running adds nothing.
      */
     private function openingBalances(): void
     {
+        if (StockTransaction::query()->exists()) {
+            return;
+        }
+
         $user = User::query()->where('role', Role::Admin)->first()
             ?? User::query()->firstOrCreate(['email' => 'demo-data@bpc.test'], [
                 'name' => 'Demo data', 'password' => Str::random(40), 'role' => Role::Admin, 'is_active' => false,
             ]);
         $opening = ReasonCode::adjustment(ReasonCode::OPENING);
         $service = app(StockService::class);
+        $sites = Site::query()->orderBy('code')->get()->keyBy('code');
+        $item = fn (string $sku) => Item::query()->where('sku', $sku)->firstOrFail();
 
-        // sku => [BPC001 Georgia qty, BPC002 Colorado qty, min level (one value, or [Georgia, Colorado]), kanban bin qty]
+        // sku => [BPC001 Georgia final qty, BPC002 Colorado final qty, min level (one value, or [Georgia, Colorado]), kanban bin qty]
         // Revision-specific saw parts get a minimum only where that revision runs: 1.0 in Georgia, 2.0 in Colorado.
         $levels = [
             'SP-10001' => [2, 1, 2, null],      // saw blade: Colorado short
-            'SP-10002' => [4, 6, 4, null],
+            'SP-10002' => [4, 6, 4, null],      // linear bearing: one moves to Colorado, leaving Georgia short
             'SP-10003' => [2, 0, 1, null],      // timing belt: Colorado out
             'SP-10004' => [3, 4, 2, null],
             'SP-10005' => [0, 1, [0, 1], null], // servo cable, rev 2.0 only (004C in Colorado)
@@ -207,29 +237,31 @@ class DemoDataSeeder extends Seeder
             'SP-10012' => [2, 0, [1, 0], null],
             'WP-20001' => [6, 3, 4, null],
             'WP-20002' => [4, 4, 4, null],
-            'CS-30001' => [12, 5, null, 6],     // filters: Colorado at one bin
+            'CS-30001' => [12, 0, null, 6],     // filters: Colorado empty; the Grainger order delivers one bin (6)
             'CS-30002' => [80, 120, null, 60],  // hydraulic oil in litres
             'CS-30003' => [20, 8, null, 10],
             'CS-30004' => [400, 250, null, 100],
             'TL-40002' => [1, 1, null, null],
         ];
 
-        foreach (Site::query()->orderBy('code')->get()->values() as $index => $site) {
-            foreach ($levels as $sku => [$georgia, $colorado, $min, $binQty]) {
-                $item = Item::query()->where('sku', $sku)->firstOrFail();
-                $qty = $index === 0 ? $georgia : $colorado;
+        $consumed = [];
+        foreach (self::CONSUMPTION as [, $siteCode, $sku, $qty]) {
+            $consumed[$siteCode][$sku] = ($consumed[$siteCode][$sku] ?? 0) + $qty;
+        }
 
-                if ($item->transactions()->where('site_id', $site->id)->exists()) {
-                    continue;
-                }
+        Carbon::setTestNow(now()->subDays(120)->setTime(7, 30));
+
+        foreach ($sites->values() as $index => $site) {
+            foreach ($levels as $sku => [$georgia, $colorado, $min, $binQty]) {
+                $qty = ($index === 0 ? $georgia : $colorado) + ($consumed[$site->code][$sku] ?? 0);
 
                 if ($qty > 0) {
-                    $price = $item->supplierItems()->orderByDesc('last_price')->value('last_price') ?? '1.0000';
-                    $service->adjust($item, $site, true, (string) $qty, $opening, $user, $price,
+                    $price = $item($sku)->supplierItems()->orderByDesc('last_price')->value('last_price') ?? '1.0000';
+                    $service->adjust($item($sku), $site, true, (string) $qty, $opening, $user, $price,
                         'Opening balance; cost from the supplier price list');
                 }
 
-                Stock::query()->updateOrCreate(['item_id' => $item->id, 'site_id' => $site->id], [
+                Stock::query()->updateOrCreate(['item_id' => $item($sku)->id, 'site_id' => $site->id], [
                     'min_level' => (is_array($min) ? $min[$index] : $min) ?? 0,
                     'is_kanban' => $binQty !== null,
                     'bin_qty' => $binQty,
@@ -237,5 +269,26 @@ class DemoDataSeeder extends Seeder
                 ]);
             }
         }
+
+        $events = collect(self::CONSUMPTION)->sortByDesc(fn ($event) => $event[0])->values();
+        $machines = Machine::query()->get()->keyBy('sku');
+
+        foreach ($events as $n => [$daysAgo, $siteCode, $sku, $qty, $destination]) {
+            Carbon::setTestNow(Carbon::now('UTC')->setTimestamp(time())->subDays($daysAgo)->setTime(13 + $n % 6, ($n * 7) % 60));
+
+            if (isset($machines[$destination])) {
+                $service->issueToMachine($item($sku), $machines[$destination], (string) $qty, $user);
+            } else {
+                $service->issueGeneral($item($sku), $sites[$siteCode], (string) $qty,
+                    ReasonCode::query()->where('code', $destination)->firstOrFail(), $user, 'Workshop and building upkeep');
+            }
+        }
+
+        // A linear bearing moved from Georgia to Colorado for 004C.
+        Carbon::setTestNow(Carbon::now('UTC')->setTimestamp(time())->subDays(35)->setTime(16, 10));
+        $service->transfer($item('SP-10002'), $sites['BPC001'], $sites['BPC002'], '1', $user, 'Carried over for 004C carriage repair');
+        $service->adjust($item('SP-10002'), $sites['BPC002'], false, '1', ReasonCode::adjustment('DAMAGE'), $user, null, 'Old bearing found cracked on arrival check');
+
+        Carbon::setTestNow();
     }
 }

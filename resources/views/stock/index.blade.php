@@ -9,6 +9,9 @@
             @if ($site && auth()->user()->can('adjust', [App\Models\Stock::class, $site]))
                 <a href="{{ route('adjustments.create') }}" class="btn-secondary btn-sm">{{ __('Adjust') }}</a>
             @endif
+            @if ($site && auth()->user()->can('adjust', [App\Models\Stock::class, $site]))
+                <a href="{{ route('transfers.create') }}" class="btn-secondary btn-sm">{{ __('Transfer in') }}</a>
+            @endif
             @can('create', App\Models\Item::class)
                 <a href="{{ route('items.create') }}" class="btn-primary">{{ __('New item') }}</a>
             @endcan

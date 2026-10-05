@@ -12,6 +12,7 @@ use App\Models\User;
 
 return [
     ['route' => 'dashboard', 'label' => 'Dashboard'],
+    ['route' => 'issues.create', 'label' => 'Issue', 'can' => 'issue-stock'],
     ['route' => 'stock.index', 'label' => 'Stock'],
     ['route' => 'kanban.index', 'label' => 'Kanban'],
     ['route' => 'purchase-orders.index', 'label' => 'Purchase orders'],

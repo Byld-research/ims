@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TransactionType;
 use App\Http\Requests\MachineRequest;
 use App\Models\Machine;
 use App\Models\MachineType;
 use App\Models\Site;
 use App\Models\Stock;
+use App\Models\StockTransaction;
 use App\Support\CsvExport;
 use App\Support\CurrentSite;
 use Illuminate\Http\RedirectResponse;
@@ -50,7 +52,7 @@ class MachineController extends Controller
         ]);
     }
 
-    public function show(Machine $machine): View
+    public function show(Request $request, Machine $machine): View
     {
         Gate::authorize('view', $machine);
 
@@ -64,7 +66,19 @@ class MachineController extends Controller
             ->get()
             ->keyBy('item_id');
 
-        return view('machines.show', compact('machine', 'partsList', 'stocks'));
+        $issues = StockTransaction::query()->where('machine_id', $machine->id)->where('type', TransactionType::IssueMachine);
+
+        return view('machines.show', [
+            'machine' => $machine,
+            'partsList' => $partsList,
+            'stocks' => $stocks,
+            'canIssue' => $machine->is_active && $request->user()->can('issue', [Stock::class, $machine->site]),
+            // Consumption is what will correct the guessed minimum levels (SPEC 8).
+            'consumption' => (clone $issues)->with(['item', 'site', 'user', 'machine', 'reasonCode', 'counterSite', 'purchaseOrderLine.purchaseOrder'])
+                ->latest('id')->paginate(25, pageName: 'history'),
+            'last90' => (clone $issues)->where('created_at', '>=', now()->subDays(90))
+                ->selectRaw('COUNT(*) AS movements, COALESCE(-SUM(value), 0) AS value')->toBase()->first(),
+        ]);
     }
 
     public function create(Request $request, CurrentSite $currentSite): View

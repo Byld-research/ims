@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdjustmentController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItemSearchController;
 use App\Http\Controllers\MachineController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\StockLevelController;
 use App\Http\Controllers\StockLookupController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
+use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
@@ -34,6 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/stock/lookup', StockLookupController::class)->name('stock.lookup');
     Route::get('/stock/levels', [StockLevelController::class, 'edit'])->name('stock.levels');
     Route::put('/stock/levels', [StockLevelController::class, 'update'])->name('stock.levels.update');
+    Route::get('/issues/create', [IssueController::class, 'create'])->name('issues.create');
+    Route::post('/issues', [IssueController::class, 'store'])->name('issues.store');
+    Route::get('/transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+    Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::get('/adjustments/create', [AdjustmentController::class, 'create'])->name('adjustments.create');
     Route::post('/adjustments', [AdjustmentController::class, 'store'])->name('adjustments.store');
     Route::get('/items/search', ItemSearchController::class)->name('items.search');

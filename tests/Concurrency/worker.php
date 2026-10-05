@@ -1,10 +1,12 @@
 <?php
 
+use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\Site;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\PurchaseOrderService;
+use App\Services\StockService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 |
 |   php worker.php receive <order_id> <line_id> <qty> <user_id> <start_at>
 |   php worker.php number <supplier_id> <site_id> <user_id> <start_at>
+|   php worker.php transfer <item_id> <from_site_id> <to_site_id> <qty> <user_id> <times> <start_at>
 |
 | Prints a JSON line with the outcome.
 */
@@ -39,6 +42,19 @@ try {
                 [(int) $lineId => $qty],
                 User::query()->findOrFail($userId),
             );
+
+            return 'ok';
+        })(),
+        'transfer' => (function () use ($argv) {
+            [, , $itemId, $fromId, $toId, $qty, $userId, $times] = $argv;
+            $item = Item::query()->findOrFail($itemId);
+            $from = Site::query()->findOrFail($fromId);
+            $to = Site::query()->findOrFail($toId);
+            $user = User::query()->findOrFail($userId);
+
+            for ($i = 0; $i < (int) $times; $i++) {
+                app(StockService::class)->transfer($item, $from, $to, $qty, $user);
+            }
 
             return 'ok';
         })(),
