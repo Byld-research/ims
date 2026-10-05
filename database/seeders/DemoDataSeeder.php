@@ -2,11 +2,18 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\MachineType;
+use App\Models\ReasonCode;
+use App\Models\Site;
+use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\User;
+use App\Services\StockService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -120,6 +127,67 @@ class DemoDataSeeder extends Seeder
                     ['item_id' => Item::query()->where('sku', $sku)->value('id'), 'revision' => $revision],
                     ['reference' => $reference, 'qty_per_machine' => $qty, 'is_consumable' => $consumable],
                 );
+            }
+        }
+
+        $this->openingBalances();
+    }
+
+    /**
+     * Opening balances through StockService (reason OPENING, cost from the supplier price),
+     * plus min levels and kanban settings. Some items are deliberately short.
+     * Skipped per item and site once any movement exists, so re-running adds nothing.
+     */
+    private function openingBalances(): void
+    {
+        $user = User::query()->where('role', Role::Admin)->first()
+            ?? User::query()->firstOrCreate(['email' => 'demo-data@bpc.test'], [
+                'name' => 'Demo data', 'password' => Str::random(40), 'role' => Role::Admin, 'is_active' => false,
+            ]);
+        $opening = ReasonCode::adjustment(ReasonCode::OPENING);
+        $service = app(StockService::class);
+
+        // sku => [BPC001 Georgia qty, BPC002 Colorado qty, min level (one value, or [Georgia, Colorado]), kanban bin qty]
+        // Revision-specific saw parts get a minimum only where that revision runs: 1.0 in Georgia, 2.0 in Colorado.
+        $levels = [
+            'SP-10001' => [2, 1, 2, null],      // saw blade: Colorado short
+            'SP-10002' => [4, 6, 4, null],
+            'SP-10003' => [2, 0, 1, null],      // timing belt: Colorado out
+            'SP-10004' => [3, 4, 2, null],
+            'SP-10005' => [0, 1, [0, 1], null], // servo cable, rev 2.0 only (004C in Colorado)
+            'SP-10009' => [0, 0, [0, 1], null], // light curtain, rev 2.0: out in Colorado
+            'SP-10011' => [1, 0, [1, 0], null], // stepper drive, rev 1.0 only (003C in Georgia)
+            'SP-10012' => [2, 0, [1, 0], null],
+            'WP-20001' => [6, 3, 4, null],
+            'WP-20002' => [4, 4, 4, null],
+            'CS-30001' => [12, 5, null, 6],     // filters: Colorado at one bin
+            'CS-30002' => [80, 120, null, 60],  // hydraulic oil in litres
+            'CS-30003' => [20, 8, null, 10],
+            'CS-30004' => [400, 250, null, 100],
+            'TL-40002' => [1, 1, null, null],
+        ];
+
+        foreach (Site::query()->orderBy('code')->get()->values() as $index => $site) {
+            foreach ($levels as $sku => [$georgia, $colorado, $min, $binQty]) {
+                $item = Item::query()->where('sku', $sku)->firstOrFail();
+                $qty = $index === 0 ? $georgia : $colorado;
+
+                if ($item->transactions()->where('site_id', $site->id)->exists()) {
+                    continue;
+                }
+
+                if ($qty > 0) {
+                    $price = $item->supplierItems()->orderByDesc('last_price')->value('last_price') ?? '1.0000';
+                    $service->adjust($item, $site, true, (string) $qty, $opening, $user, $price,
+                        'Opening balance; cost from the supplier price list');
+                }
+
+                Stock::query()->updateOrCreate(['item_id' => $item->id, 'site_id' => $site->id], [
+                    'min_level' => (is_array($min) ? $min[$index] : $min) ?? 0,
+                    'is_kanban' => $binQty !== null,
+                    'bin_qty' => $binQty,
+                    'bin' => sprintf('%s-%s', $index === 0 ? 'GA' : 'CO', substr($sku, 0, 2).substr($sku, -2)),
+                ]);
             }
         }
     }

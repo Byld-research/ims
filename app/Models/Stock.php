@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\Decimal;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +38,21 @@ class Stock extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    public function value(): string
+    {
+        return Decimal::round(Decimal::mul($this->qty, $this->avg_cost), 4);
+    }
+
+    /**
+     * The SQL form of needsReplenishment() (SPEC 5.5).
+     */
+    public function scopeNeedsReplenishment(Builder $query): void
+    {
+        $query->where(fn ($q) => $q
+            ->where(fn ($q) => $q->where('is_kanban', false)->where('min_level', '>', 0)->whereColumn('qty', '<', 'min_level'))
+            ->orWhere(fn ($q) => $q->where('is_kanban', true)->whereColumn('qty', '<=', 'bin_qty')));
     }
 
     /**

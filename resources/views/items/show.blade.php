@@ -36,8 +36,10 @@
                                 <th>{{ __('Site') }}</th>
                                 <th class="num">{{ __('Quantity') }}</th>
                                 <th class="num">{{ __('Avg cost') }}</th>
+                                <th class="num">{{ __('Value') }}</th>
                                 <th class="num">{{ __('Min level') }}</th>
                                 <th>{{ __('Bin') }}</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -47,8 +49,23 @@
                                     <td>{{ $site->code }} · {{ $site->name }}</td>
                                     <td class="num">{{ \App\Support\Format::qty($stock?->qty ?? 0) }} {{ $item->uom }}</td>
                                     <td class="num">{{ $stock ? \App\Support\Format::money($stock->avg_cost) : '—' }}</td>
-                                    <td class="num">{{ $stock && $stock->min_level > 0 ? \App\Support\Format::qty($stock->min_level) : '—' }}</td>
+                                    <td class="num">{{ $stock ? \App\Support\Format::money($stock->value()) : '—' }}</td>
+                                    <td class="num">
+                                        @if ($stock?->is_kanban)
+                                            {{ __('kanban, bin :q', ['q' => \App\Support\Format::qty($stock->bin_qty)]) }}
+                                        @else
+                                            {{ $stock && bccomp($stock->min_level, '0', 3) > 0 ? \App\Support\Format::qty($stock->min_level) : '—' }}
+                                        @endif
+                                        @if ($stock?->needsReplenishment())
+                                            <span class="badge-red ms-1">{{ __('Low') }}</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $stock?->bin ?? '—' }}</td>
+                                    <td class="text-right whitespace-nowrap">
+                                        @can('adjust', [App\Models\Stock::class, $site])
+                                            <a class="link text-sm" href="{{ route('adjustments.create', ['item' => $item->id, 'site' => $site->id]) }}">{{ __('Adjust') }}</a>
+                                        @endcan
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -126,5 +143,21 @@
                 </div>
             </section>
         </div>
+
+        <section class="card" id="history">
+            <div class="card-body pb-2 flex flex-wrap items-center justify-between gap-3">
+                <h3 class="card-title">{{ __('Movement history') }}</h3>
+                <form method="GET" action="{{ route('items.show', $item) }}#history" class="flex items-center gap-2 text-sm">
+                    <label for="history_site" class="text-gray-600">{{ __('Site') }}</label>
+                    <select name="history_site" id="history_site" class="form-input py-1 w-40" onchange="this.form.submit()">
+                        <option value="">{{ __('All sites') }}</option>
+                        @foreach ($sites as $site)
+                            <option value="{{ $site->id }}" @selected($historySite === $site->id)>{{ $site->code }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
+            @include('stock._ledger', ['transactions' => $transactions, 'showItem' => false, 'uom' => $item->uom])
+        </section>
     </x-page>
 </x-app-layout>

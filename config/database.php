@@ -79,6 +79,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => 'InnoDB',
+            // Stock movements rely on locking reads (SELECT … FOR UPDATE). Under REPEATABLE READ,
+            // MariaDB's snapshot isolation (default since 11.6) rejects a locking read of a row
+            // changed after the snapshot with error 1020; READ COMMITTED avoids that (SPEC 5.2.4).
+            'isolation_level' => env('DB_ISOLATION_LEVEL', 'READ COMMITTED'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

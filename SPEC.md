@@ -460,7 +460,7 @@ Store four decimal places. Round only for display, never in storage.
 1. Quantity entered by the user is always positive. Direction comes from the transaction type, never from a negative input.
 2. An outgoing movement that would take stock below zero is rejected with a message naming the available quantity.
 3. Each movement writes one `stock_transactions` row per affected site and updates the matching `stocks` row, inside one database transaction.
-4. The `stocks` row is locked with `SELECT ... FOR UPDATE` before being read for the calculation. Two managers receiving the same line simultaneously must not double-count.
+4. The `stocks` row is locked with `SELECT ... FOR UPDATE` before being read for the calculation. Two managers receiving the same line simultaneously must not double-count. The row is locked before any insert is attempted, connections use the READ COMMITTED isolation level (MariaDB's snapshot isolation otherwise rejects locking reads of recently changed rows), and a deadlock is retried up to three times before an error reaches the user.
 5. `qty_after` and `avg_cost_after` are written on every row so the ledger can be read without replaying it.
 6. Nothing in `stock_transactions` is ever updated or deleted. Corrections are compensating adjustments.
 
@@ -792,6 +792,8 @@ Each of these must be covered by an automated test.
 
 6. An issue larger than available quantity is rejected, and no transaction row is written.
 7. Two concurrent receipts against the same line produce exactly two transactions and a correct final quantity.
+
+`php artisan ims:verify-stock` performs check 8 for every stock row and exits non-zero on any mismatch; run it nightly.
 8. Replaying all transactions for an item and site reproduces the current `stocks` row exactly.
 9. No code path updates or deletes a `stock_transactions` row.
 
@@ -841,6 +843,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.4 | 2026-10-05 | Concurrency details in 5.2.4 (lock before insert, READ COMMITTED, retry); `ims:verify-stock` |
 | 1.3 | 2026-10-05 | Site codes corrected: BPC001 is Georgia, BPC002 is Colorado. Machine locations unchanged; their site codes and criterion 33 updated accordingly |
 | 1.2 | 2026-10-05 | Terminology section; *work centre* replaced by *machine* throughout; machine types identified by letter with `last_serial`; machine register with SKU, name, revision and current site, relocatable; parts list lines optionally limited to a revision; machines in Poland excluded; machine register seeded; type C as the reference case; criteria 29–33 |
 | 1.1 | 2026-10-05 | Half-up rounding rule; receipt cost from line price; transfer moved to a dedicated incoming form with explicit policy exception and rejection guidance; missing receive transitions from ORDERED and CONFIRMED; pack size informational only; uncounted lines skipped at posting; OPENING sets `last_counted_at`; operators read purchase orders; `sites.digest_hour` |

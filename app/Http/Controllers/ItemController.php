@@ -7,14 +7,17 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\Site;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class ItemController extends Controller
 {
-    public function show(Item $item): View
+    public function show(Request $request, Item $item): View
     {
         Gate::authorize('view', $item);
+
+        $historySite = $request->integer('history_site') ?: null;
 
         $item->load([
             'category.parent',
@@ -27,6 +30,13 @@ class ItemController extends Controller
             'item' => $item,
             'sites' => Site::query()->active()->orderBy('code')->get(),
             'stocksBySite' => $item->stocks->keyBy('site_id'),
+            'historySite' => $historySite,
+            'transactions' => $item->transactions()
+                ->with(['site', 'counterSite', 'machine', 'reasonCode', 'user', 'purchaseOrderLine.purchaseOrder'])
+                ->when($historySite, fn ($q, $siteId) => $q->where('site_id', $siteId))
+                ->latest('id')
+                ->paginate(25, pageName: 'history')
+                ->withQueryString(),
         ]);
     }
 

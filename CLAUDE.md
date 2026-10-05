@@ -18,7 +18,8 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 
 ## Rules that are easy to break
 
-- **All stock mutations go through `App\Services\StockService`.** `stocks.qty` and `stocks.avg_cost` are not fillable on purpose.
+- **All stock mutations go through `App\Services\StockService`.** `stocks.qty` and `stocks.avg_cost` are not fillable on purpose. New movement types add a public method that calls `post()` inside `DB::transaction(..., StockService::ATTEMPTS)`.
+- **Concurrency is tested for real, not only in Pest.** Pest runs inside one transaction, so it cannot test row locks. After touching locking, run parallel writers against the dev database, then run `php artisan ims:verify-stock`. The connection uses READ COMMITTED on purpose (see `config/database.php`).
 - **`stock_transactions` is append-only**, enforced by the model and by database triggers. Corrections are compensating adjustments.
 - **No floats for money or quantities.** Use `App\Support\Decimal`; it rounds half-up. Raw `bcdiv`/`bcmul` truncate and will break the 4.6667 acceptance case.
 - **Authorisation through policies only.** A manager writes only where `site_id` is their own (`User::canWriteSite`). The single exception is a transfer, authorised against the receiving site (`StockPolicy::transfer`).
@@ -36,7 +37,7 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 
 - [x] Stage 1: schema, enums, models, auth, roles, policies, site selector, layout
 - [x] Stage 2: categories, items, suppliers, supplier items, machine types, parts lists (CSV import, per revision), machine register, stock list
-- [ ] Stage 3: StockService, adjustments, stock list, item detail, bulk level editor
+- [x] Stage 3: StockService, adjustments (incl. opening balances), stock list levels and filters, item movement history, bulk level editor, `ims:verify-stock`
 - [ ] Stage 4: purchase orders, transitions, receiving
 - [ ] Stage 5: issues and transfers
 - [ ] Stage 6: stock counts

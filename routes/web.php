@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdjustmentController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\MachineTypeItemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteSelectionController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockLevelController;
+use App\Http\Controllers\StockLookupController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +27,11 @@ Route::middleware('auth')->group(function () {
 
     // Catalogue
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+    Route::get('/stock/lookup', StockLookupController::class)->name('stock.lookup');
+    Route::get('/stock/levels', [StockLevelController::class, 'edit'])->name('stock.levels');
+    Route::put('/stock/levels', [StockLevelController::class, 'update'])->name('stock.levels.update');
+    Route::get('/adjustments/create', [AdjustmentController::class, 'create'])->name('adjustments.create');
+    Route::post('/adjustments', [AdjustmentController::class, 'store'])->name('adjustments.store');
     Route::get('/items/search', ItemSearchController::class)->name('items.search');
     Route::resource('items', ItemController::class)->except(['index', 'destroy']);
     Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);

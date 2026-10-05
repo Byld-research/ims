@@ -29,18 +29,21 @@ class StockController extends Controller
             'category' => ['nullable', 'integer'],
             'criticality' => ['nullable', Rule::enum(Criticality::class)],
             'inactive' => ['nullable', 'boolean'],
+            'below' => ['nullable', 'boolean'],
+            'kanban' => ['nullable', 'boolean'],
         ]);
 
         $sites = Site::query()->active()->orderBy('code')->get();
-        $query = $this->query($filters);
+        $query = $this->query($filters, $currentSite->id());
 
         if (CsvExport::requested($request)) {
-            return $this->export($query, $sites);
+            return $this->export($query, $sites, $currentSite->get());
         }
 
         return response()->view('stock.index', [
             'items' => $query->paginate(50)->withQueryString(),
             'sites' => $sites,
+            'site' => $currentSite->get(),
             'currentSiteId' => $currentSite->id(),
             'filters' => $filters,
             'categories' => Category::assignableOptions(),
@@ -49,9 +52,12 @@ class StockController extends Controller
 
     /**
      * @param  array<string, mixed>  $filters
+     * @param  int|null  $siteId  the selected site; null filters across all sites
      */
-    private function query(array $filters): Builder
+    private function query(array $filters, ?int $siteId): Builder
     {
+        $atSite = fn ($q) => $q->when($siteId, fn ($q) => $q->where('site_id', $siteId));
+
         return Item::query()
             ->with(['category.parent', 'stocks'])
             ->unless($filters['inactive'] ?? false, fn ($q) => $q->active())
@@ -64,23 +70,37 @@ class StockController extends Controller
                 $q->whereIn('category_id', $category ? $category->selfAndChildIds() : [0]);
             })
             ->when($filters['criticality'] ?? null, fn ($q, $c) => $q->where('criticality', $c))
+            ->when($filters['below'] ?? false, fn ($q) => $q->whereHas('stocks', fn ($q) => $atSite($q)->needsReplenishment()))
+            ->when($filters['kanban'] ?? false, fn ($q) => $q->whereHas('stocks', fn ($q) => $atSite($q)->where('is_kanban', true)))
+            ->when($filters['below'] ?? false,
+                // Class A first, then B, C and unclassified (SPEC 8).
+                fn ($q) => $q->orderByRaw('criticality is null, criticality'))
             ->orderBy('sku');
     }
 
-    private function export(Builder $query, $sites): Response
+    private function export(Builder $query, $sites, ?Site $site): Response
     {
         $headings = ['SKU', 'Name', 'Category', 'UoM', 'Criticality', 'Manufacturer', 'MPN', 'Active'];
-        foreach ($sites as $site) {
-            $headings[] = $site->code.' qty';
+        foreach ($sites as $each) {
+            $headings[] = $each->code.' qty';
+        }
+        if ($site) {
+            array_push($headings, $site->code.' min level', $site->code.' bin', $site->code.' kanban',
+                $site->code.' qty per bin', $site->code.' avg cost', $site->code.' value', $site->code.' needs replenishment');
         }
 
-        $rows = (function () use ($query, $sites) {
+        $rows = (function () use ($query, $sites, $site) {
             foreach ($query->lazy(500) as $item) {
                 $stocks = $item->stocks->keyBy('site_id');
                 $row = [$item->sku, $item->name, $item->category->fullName(), $item->uom, $item->criticality,
                     $item->manufacturer, $item->mpn, $item->is_active];
-                foreach ($sites as $site) {
-                    $row[] = $stocks->get($site->id)?->qty ?? '0.000';
+                foreach ($sites as $each) {
+                    $row[] = $stocks->get($each->id)?->qty ?? '0.000';
+                }
+                if ($site) {
+                    $stock = $stocks->get($site->id);
+                    array_push($row, $stock?->min_level ?? '0.000', $stock?->bin, (bool) $stock?->is_kanban, $stock?->bin_qty,
+                        $stock?->avg_cost ?? '0.0000', $stock?->value() ?? '0.0000', (bool) $stock?->needsReplenishment());
                 }
                 yield $row;
             }

@@ -3,9 +3,11 @@
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\MachineTypeItem;
+use App\Models\ReasonCode;
 use App\Models\Site;
 use App\Models\SupplierItem;
 use App\Models\User;
+use App\Services\StockService;
 
 beforeEach(function () {
     $this->site = Site::factory()->create();
@@ -111,4 +113,26 @@ test('the item page shows stock per site, suppliers and machine types to everyon
         ->assertSee('VEND-77')
         ->assertSee($machineType->name)
         ->assertDontSee(route('items.edit', $item));
+});
+
+test('the item page shows the movement history, newest first, filterable by site', function () {
+    $item = Item::factory()->create(['uom' => 'pc']);
+    $other = Site::factory()->create(['code' => 'BPC777']);
+    $service = app(StockService::class);
+    $opening = ReasonCode::query()->create(['applies_to' => 'ADJUSTMENT', 'code' => 'OPENING', 'label' => 'Opening balance']);
+
+    $service->adjust($item, $this->site, true, '5', $opening, $this->manager, '10', 'first count');
+    $service->adjust($item, $other, true, '2', $opening, $this->manager, '11', 'other site count');
+
+    $this->actingAs($this->manager)
+        ->get(route('items.show', $item))
+        ->assertOk()
+        ->assertSee('Movement history')
+        ->assertSeeInOrder(['other site count', 'first count'])
+        ->assertSee('Opening balance')
+        ->assertSee('+5');
+
+    $this->get(route('items.show', [$item, 'history_site' => $this->site->id]))
+        ->assertSee('first count')
+        ->assertDontSee('other site count');
 });
