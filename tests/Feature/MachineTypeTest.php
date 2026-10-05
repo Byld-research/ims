@@ -119,8 +119,8 @@ test('the Truss Saw page shows the parts list with revisions and the registered 
         ->assertSee('C · Truss Saw')
         ->assertSee('next machine: 007C')
         ->assertSee('SP-SERVO-20')
-        ->assertSeeInOrder(['003C', 'Truss Saw 1.0', 'BPC002'])
-        ->assertSeeInOrder(['004C', 'Truss Saw 2.0', 'BPC001']);
+        ->assertSeeInOrder(['003C', 'Truss Saw 1.0', 'BPC001'])
+        ->assertSeeInOrder(['004C', 'Truss Saw 2.0', 'BPC002']);
 });
 
 test('a Truss Saw parts list is imported from CSV with revisions, and re-importing updates', function () {

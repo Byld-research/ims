@@ -28,8 +28,10 @@ test('seeders are idempotent', function () {
 test('seeded reference data matches the specification', function () {
     $this->seed(DatabaseSeeder::class);
 
-    expect(Site::query()->where('code', 'BPC001')->value('timezone'))->toBe('America/Denver')
-        ->and(Site::query()->where('code', 'BPC002')->value('timezone'))->toBe('America/New_York')
+    expect(Site::query()->where('code', 'BPC001')->value('state'))->toBe('GA')
+        ->and(Site::query()->where('code', 'BPC001')->value('timezone'))->toBe('America/New_York')
+        ->and(Site::query()->where('code', 'BPC002')->value('state'))->toBe('CO')
+        ->and(Site::query()->where('code', 'BPC002')->value('timezone'))->toBe('America/Denver')
         ->and(ReasonCode::adjustment(ReasonCode::OPENING)->label)->toBe('Opening balance')
         ->and(Category::query()->where('is_structural', true)->count())->toBe(5)
         ->and(Category::query()->where('name', 'Die Blades')->first()->parent->name)->toBe('Wear Parts');
@@ -64,10 +66,10 @@ test('the machine register matches the specification', function () {
         ->and(Machine::count())->toBe(10)
         ->and(Machine::query()->where('sku', '003C')->first())
         ->revision->toBe('1.0')
-        ->site->code->toBe('BPC002')
+        ->site->code->toBe('BPC001')
         ->and(Machine::query()->where('sku', '004C')->first())
         ->revision->toBe('2.0')
-        ->site->code->toBe('BPC001')
+        ->site->code->toBe('BPC002')
         ->and(Machine::query()->whereIn('sku', ['005C', '006C', '006A', '007A', '001D', '005B', '006B'])->count())->toBe(0);
 });
 

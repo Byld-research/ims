@@ -19,8 +19,8 @@ The application manages spare parts, consumables and materials used to keep mach
 
 | Code | Location |
 |---|---|
-| BPC001 | Colorado |
-| BPC002 | Georgia |
+| BPC001 | Georgia |
+| BPC002 | Colorado |
 
 The schema must support adding more sites without modification.
 
@@ -46,7 +46,7 @@ These terms are used with exactly one meaning throughout the specification, the 
 
 | Term (UI and code) | Polish | Meaning | Example |
 |---|---|---|---|
-| Site (`site`) | zakład | A US manufacturing location where stock is held and machines are installed. | BPC001 Colorado |
+| Site (`site`) | zakład | A US manufacturing location where stock is held and machines are installed. | BPC001 Georgia |
 | Item (`item`) | pozycja katalogowa | A catalogue entry for a spare part, wear part, consumable or tool. Global, shared by both sites. | SP-10001 Saw blade |
 | Item SKU (`items.sku`) | SKU pozycji | The unique catalogue number of an item. | SP-10001 |
 | Machine type (`machine_type`) | typ maszyny | A family of machines, identified by a single letter. Holds the parts list. | C · Truss Saw |
@@ -154,7 +154,7 @@ erDiagram
 | code | varchar(10) unique | BPC001 |
 | name | varchar(100) | |
 | state | varchar(2) | CO, GA |
-| timezone | varchar(64) | America/Denver, America/New_York |
+| timezone | varchar(64) | America/New_York, America/Denver |
 | digest_hour | tinyint default 7 | local hour (0–23) at which the daily digest is sent |
 | is_active | boolean default true | |
 | timestamps | | |
@@ -669,7 +669,7 @@ The machine figures are the reason every issue records both quantity and cost. T
 
 Seeders must be provided and must be idempotent.
 
-**Sites** — BPC001 Colorado `America/Denver`, BPC002 Georgia `America/New_York`.
+**Sites** — BPC001 Georgia `America/New_York`, BPC002 Colorado `America/Denver`.
 
 **Reason codes**
 
@@ -700,16 +700,16 @@ Seeders must be provided and must be idempotent.
 
 | SKU | Name | Revision | Site |
 |---|---|---|---|
-| 003C | Truss Saw | 1.0 | BPC002 |
-| 004C | Truss Saw | 2.0 | BPC001 |
-| 003A | Wall Machine 6" Standard no HD punch | 1.0 | BPC001 |
-| 004A | Wall Machine 6" Standard no HD punch | 1.0 | BPC002 |
-| 005A | Wall Machine 6" Standard no HD punch | 1.0 | BPC002 |
-| 004B | Header & Strapping Machine | 1.0 | BPC002 |
-| 006W | Wall JIG | 1.0 | BPC002 |
-| 007W | Wall JIG | 1.0 | BPC002 |
-| 008W | Wall JIG | 1.0 | BPC001 |
-| 009W | Wall JIG | 1.0 | BPC001 |
+| 003C | Truss Saw | 1.0 | BPC001 |
+| 004C | Truss Saw | 2.0 | BPC002 |
+| 003A | Wall Machine 6" Standard no HD punch | 1.0 | BPC002 |
+| 004A | Wall Machine 6" Standard no HD punch | 1.0 | BPC001 |
+| 005A | Wall Machine 6" Standard no HD punch | 1.0 | BPC001 |
+| 004B | Header & Strapping Machine | 1.0 | BPC001 |
+| 006W | Wall JIG | 1.0 | BPC001 |
+| 007W | Wall JIG | 1.0 | BPC001 |
+| 008W | Wall JIG | 1.0 | BPC002 |
+| 009W | Wall JIG | 1.0 | BPC002 |
 
 Machines 005C, 006C (Truss Saw 2.0), 006A, 007A (Wall Machine 6"), 001D (Wall Machine 3 5/8" Standard), 005B and 006B (Header & Strapping Machine) are in Poland and are not registered; their serials are reserved through `last_serial`.
 
@@ -832,7 +832,7 @@ Each of these must be covered by an automated test.
 30. A machine SKU whose letter does not match its type, such as 007A for a Truss Saw, is rejected; so is a duplicate SKU.
 31. A parts list line with no revision appears for both 003C (1.0) and 004C (2.0); a line limited to 2.0 appears for 004C only.
 32. Adding a revision-specific line for an item that already has an all-revisions line on the same type is rejected, and vice versa.
-33. Stock can be issued to 004C only at BPC001. After 004C is relocated to BPC002, issues go through BPC002, and earlier transactions still show BPC001.
+33. Stock can be issued to 004C only at BPC002. After 004C is relocated to BPC001, issues go through BPC001, and earlier transactions still show BPC002.
 
 ---
 
@@ -841,5 +841,6 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.3 | 2026-10-05 | Site codes corrected: BPC001 is Georgia, BPC002 is Colorado. Machine locations unchanged; their site codes and criterion 33 updated accordingly |
 | 1.2 | 2026-10-05 | Terminology section; *work centre* replaced by *machine* throughout; machine types identified by letter with `last_serial`; machine register with SKU, name, revision and current site, relocatable; parts list lines optionally limited to a revision; machines in Poland excluded; machine register seeded; type C as the reference case; criteria 29–33 |
 | 1.1 | 2026-10-05 | Half-up rounding rule; receipt cost from line price; transfer moved to a dedicated incoming form with explicit policy exception and rejection guidance; missing receive transitions from ORDERED and CONFIRMED; pack size informational only; uncounted lines skipped at posting; OPENING sets `last_counted_at`; operators read purchase orders; `sites.digest_hour` |

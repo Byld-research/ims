@@ -27,16 +27,16 @@ class MachineRegisterSeeder extends Seeder
 
     /** [sku, proper name, revision, site code] */
     public const MACHINES = [
-        ['003C', 'Truss Saw', '1.0', 'BPC002'],
-        ['004C', 'Truss Saw', '2.0', 'BPC001'],
-        ['003A', 'Wall Machine 6" Standard no HD punch', '1.0', 'BPC001'],
-        ['004A', 'Wall Machine 6" Standard no HD punch', '1.0', 'BPC002'],
-        ['005A', 'Wall Machine 6" Standard no HD punch', '1.0', 'BPC002'],
-        ['004B', 'Header & Strapping Machine', '1.0', 'BPC002'],
-        ['006W', 'Wall JIG', '1.0', 'BPC002'],
-        ['007W', 'Wall JIG', '1.0', 'BPC002'],
-        ['008W', 'Wall JIG', '1.0', 'BPC001'],
-        ['009W', 'Wall JIG', '1.0', 'BPC001'],
+        ['003C', 'Truss Saw', '1.0', 'BPC001'],
+        ['004C', 'Truss Saw', '2.0', 'BPC002'],
+        ['003A', 'Wall Machine 6" Standard no HD punch', '1.0', 'BPC002'],
+        ['004A', 'Wall Machine 6" Standard no HD punch', '1.0', 'BPC001'],
+        ['005A', 'Wall Machine 6" Standard no HD punch', '1.0', 'BPC001'],
+        ['004B', 'Header & Strapping Machine', '1.0', 'BPC001'],
+        ['006W', 'Wall JIG', '1.0', 'BPC001'],
+        ['007W', 'Wall JIG', '1.0', 'BPC001'],
+        ['008W', 'Wall JIG', '1.0', 'BPC002'],
+        ['009W', 'Wall JIG', '1.0', 'BPC002'],
     ];
 
     public function run(): void

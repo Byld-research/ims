@@ -11,14 +11,14 @@ use Illuminate\Support\Facades\DB;
 
 /*
 | The machine register, with type C (Truss Saw) as the reference case (SPEC 9, 13.29–33):
-| 003C rev 1.0 at BPC002 Georgia, 004C rev 2.0 at BPC001 Colorado; 005C and 006C are in Poland.
+| 003C rev 1.0 at BPC001 Georgia, 004C rev 2.0 at BPC002 Colorado; 005C and 006C are in Poland.
 */
 
 beforeEach(function () {
     $this->seed(DatabaseSeeder::class);
 
-    $this->colorado = Site::query()->where('code', 'BPC001')->sole();
-    $this->georgia = Site::query()->where('code', 'BPC002')->sole();
+    $this->georgia = Site::query()->where('code', 'BPC001')->sole();
+    $this->colorado = Site::query()->where('code', 'BPC002')->sole();
     $this->trussSaw = MachineType::query()->where('code', 'C')->sole();
     $this->saw003 = Machine::query()->where('sku', '003C')->sole();
     $this->saw004 = Machine::query()->where('sku', '004C')->sole();
@@ -138,7 +138,7 @@ test('criterion 33 (register part): relocating 004C keeps its history at the old
 
     $this->actingAs($this->admin)
         ->put(route('machines.update', $this->saw004), truss(['sku' => '004C', 'site_id' => $this->georgia->id]))
-        ->assertSessionHas('success', 'Machine relocated to BPC002. Earlier movements stay recorded at the previous site.');
+        ->assertSessionHas('success', 'Machine relocated to BPC001. Earlier movements stay recorded at the previous site.');
 
     expect($this->saw004->fresh()->site_id)->toBe($this->georgia->id)
         ->and($issue->fresh()->site_id)->toBe($this->colorado->id);

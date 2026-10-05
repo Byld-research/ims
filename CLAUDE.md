@@ -1,6 +1,6 @@
 # BPC Inventory System
 
-`SPEC.md` is the authoritative specification. Read it before changing behaviour; if something is not in it, it is out of scope. `IMS_USA_documentation.md` and `IMS_USA_spec_mvp.md` are superseded background documents.
+`SPEC.md` is the authoritative specification. Sites: **BPC001 = Georgia, BPC002 = Colorado**. Read it before changing behaviour; if something is not in it, it is out of scope. `IMS_USA_documentation.md` and `IMS_USA_spec_mvp.md` are superseded background documents.
 
 ## Stack and local setup
 
@@ -14,7 +14,7 @@ Laravel 13, PHP 8.2+, MariaDB (InnoDB, utf8mb4_unicode_ci), Breeze Blade, Tailwi
 
 ## Terminology
 
-Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) and holds the parts list. *Machine* is one physical unit with a SKU like `004C`, a revision and a current site. Stock is issued to machines (`ISSUE_MACHINE`, `machine_id`). There is no "work centre". Type C (003C rev 1.0 at BPC002, 004C rev 2.0 at BPC001) is the reference case for tests and demo data.
+Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) and holds the parts list. *Machine* is one physical unit with a SKU like `004C`, a revision and a current site. Stock is issued to machines (`ISSUE_MACHINE`, `machine_id`). There is no "work centre". Type C (003C rev 1.0 at BPC001 Georgia, 004C rev 2.0 at BPC002 Colorado) is the reference case for tests and demo data.
 
 ## Rules that are easy to break
 

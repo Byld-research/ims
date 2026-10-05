@@ -7,8 +7,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
-    $this->colorado = Site::factory()->create(['code' => 'BPC001']);
-    $this->georgia = Site::factory()->create(['code' => 'BPC002']);
+    $this->georgia = Site::factory()->create(['code' => 'BPC001']);
+    $this->colorado = Site::factory()->create(['code' => 'BPC002']);
     $this->user = User::factory()->operator($this->colorado)->create();
 });
 

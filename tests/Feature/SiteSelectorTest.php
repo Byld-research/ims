@@ -5,8 +5,8 @@ use App\Models\User;
 use App\Support\CurrentSite;
 
 beforeEach(function () {
-    $this->colorado = Site::factory()->create(['code' => 'BPC001', 'name' => 'BPC Colorado']);
-    $this->georgia = Site::factory()->create(['code' => 'BPC002', 'name' => 'BPC Georgia']);
+    $this->georgia = Site::factory()->create(['code' => 'BPC001', 'name' => 'BPC Georgia']);
+    $this->colorado = Site::factory()->create(['code' => 'BPC002', 'name' => 'BPC Colorado']);
 });
 
 test('a manager works at their own site', function () {
