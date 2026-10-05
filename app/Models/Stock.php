@@ -56,6 +56,31 @@ class Stock extends Model
     }
 
     /**
+     * Suggested count frequency (SPEC 5.6): class A monthly, B and C quarterly, kanban quarterly.
+     * The stricter interval wins for a class A kanban item. Unclassified, non-kanban items have none.
+     */
+    public function scopeDueForCount(Builder $query, ?\DateTimeInterface $asOf = null): void
+    {
+        $asOf ??= now();
+
+        $query->join('items as due_items', 'due_items.id', '=', 'stocks.item_id')
+            ->where('due_items.is_active', true)
+            ->whereRaw(<<<'SQL'
+                (CASE
+                    WHEN due_items.criticality = 'A' THEN 30
+                    WHEN due_items.criticality IN ('B', 'C') OR stocks.is_kanban = 1 THEN 90
+                END) IS NOT NULL
+                SQL)
+            ->where(fn ($q) => $q->whereNull('stocks.last_counted_at')->orWhereRaw(<<<'SQL'
+                stocks.last_counted_at < DATE_SUB(?, INTERVAL (CASE
+                    WHEN due_items.criticality = 'A' THEN 30
+                    WHEN due_items.criticality IN ('B', 'C') OR stocks.is_kanban = 1 THEN 90
+                END) DAY)
+                SQL, [$asOf]))
+            ->select('stocks.*');
+    }
+
+    /**
      * Low stock rule from SPEC 5.5. Kanban items ignore min_level.
      */
     public function needsReplenishment(): bool

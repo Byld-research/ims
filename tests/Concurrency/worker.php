@@ -3,9 +3,11 @@
 use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\Site;
+use App\Models\StockCount;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\PurchaseOrderService;
+use App\Services\StockCountService;
 use App\Services\StockService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 |
 |   php worker.php receive <order_id> <line_id> <qty> <user_id> <start_at>
 |   php worker.php number <supplier_id> <site_id> <user_id> <start_at>
+|   php worker.php post-count <stock_count_id> <user_id> <start_at>
 |   php worker.php transfer <item_id> <from_site_id> <to_site_id> <qty> <user_id> <times> <start_at>
 |
 | Prints a JSON line with the outcome.
@@ -57,6 +60,15 @@ try {
             }
 
             return 'ok';
+        })(),
+        'post-count' => (function () use ($argv) {
+            [, , $countId, $userId] = $argv;
+            $result = app(StockCountService::class)->post(
+                StockCount::query()->findOrFail($countId),
+                User::query()->findOrFail($userId),
+            );
+
+            return json_encode($result);
         })(),
         'number' => (function () use ($argv) {
             [, , $supplierId, $siteId, $userId] = $argv;

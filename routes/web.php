@@ -16,6 +16,7 @@ use App\Http\Controllers\PurchaseOrderLineController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\SiteSelectionController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockCountController;
 use App\Http\Controllers\StockLevelController;
 use App\Http\Controllers\StockLookupController;
 use App\Http\Controllers\SupplierController;
@@ -71,6 +72,17 @@ Route::middleware('auth')->group(function () {
     }
     Route::get('/purchase-orders/{purchaseOrder}/receive', [ReceiptController::class, 'create'])->name('purchase-orders.receive');
     Route::post('/purchase-orders/{purchaseOrder}/receive', [ReceiptController::class, 'store'])->name('purchase-orders.receive.store');
+
+    // Stock counts
+    Route::resource('stock-counts', StockCountController::class)->only(['index', 'create', 'store', 'show'])
+        ->parameters(['stock-counts' => 'stockCount']);
+    Route::post('/stock-counts/{stockCount}/lines', [StockCountController::class, 'addLines'])->name('stock-counts.lines.store');
+    Route::delete('/stock-count-lines/{stockCountLine}', [StockCountController::class, 'removeLine'])->name('stock-count-lines.destroy');
+    Route::post('/stock-counts/{stockCount}/start', [StockCountController::class, 'start'])->name('stock-counts.start');
+    Route::put('/stock-counts/{stockCount}/counts', [StockCountController::class, 'saveCounts'])->name('stock-counts.counts');
+    Route::get('/stock-counts/{stockCount}/review', [StockCountController::class, 'review'])->name('stock-counts.review');
+    Route::post('/stock-counts/{stockCount}/post', [StockCountController::class, 'post'])->name('stock-counts.post');
+    Route::post('/stock-counts/{stockCount}/cancel', [StockCountController::class, 'cancel'])->name('stock-counts.cancel');
 
     // Machine register
     Route::resource('machines', MachineController::class)->except('destroy');

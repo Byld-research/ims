@@ -8,7 +8,7 @@ Laravel 13, PHP 8.2+, MariaDB (InnoDB, utf8mb4_unicode_ci), Breeze Blade, Tailwi
 
 - App database `ims`, test database `ims_test`, user `ims` / `ims` on 127.0.0.1 (Homebrew MariaDB: `brew services start mariadb`).
 - `php artisan migrate:fresh --seed` — sites, reason codes, categories, the real machine register (8 types, 10 US machines), plus dev users from `SEED_*` env vars (`admin@bpc.test`, `manager.bpc001@bpc.test`, `manager.bpc002@bpc.test`).
-- `php artisan db:seed --class=DemoDataSeeder` — demo catalogue (22 items, 5 suppliers, parts lists for types C, A and W), opening balances 120 days back, consumption history, one transfer, and purchase orders in several states.
+- `php artisan db:seed --class=DemoDataSeeder` — demo catalogue (22 items, 5 suppliers, parts lists for types C, A and W), opening balances 120 days back, consumption history, one transfer, purchase orders in several states, a posted class A count and a consumables count in progress.
 - `php artisan test` — the suite runs against MariaDB, not SQLite: triggers, CHECK constraints and row locking are part of what is tested. The `Concurrency` suite (`tests/Concurrency`) starts real parallel PHP processes against `ims_test`, commits data and rebuilds the database afterwards; run it alone with `./vendor/bin/pest --testsuite=Concurrency`.
 - `./vendor/bin/pint` before committing.
 
@@ -41,6 +41,6 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - [x] Stage 3: StockService, adjustments (incl. opening balances), stock list levels and filters, item movement history, bulk level editor, `ims:verify-stock`
 - [x] Stage 4: purchase orders, numbering, transitions, partial receipts, close short, over-receipt warning, on-order quantities, real-process concurrency tests
 - [x] Stage 5: issue to machine / general (three-step form), transfers entered by the receiving site, machine consumption history, concurrent opposite-transfer test
-- [ ] Stage 6: stock counts
+- [x] Stage 6: stock counts (add by category/class/kanban/due/item, blind sheet by bin, review against live stock, post, double-post protection)
 - [ ] Stage 7: dashboard, kanban view, CSV exports
 - [ ] Stage 8: daily digest, audit log, hardening

@@ -6,6 +6,7 @@ use App\Models\Machine;
 use App\Models\MachineTypeItem;
 use App\Models\PurchaseOrderLine;
 use App\Models\Site;
+use App\Models\StockCount;
 use App\Models\SupplierItem;
 use App\Models\User;
 use Illuminate\Routing\Route as RoutingRoute;
@@ -36,6 +37,8 @@ test('an operator is refused on every write route', function () {
         'machine' => Machine::factory()->create(['site_id' => $site->id])->id,
         'purchaseOrder' => ($line = PurchaseOrderLine::factory()->create())->purchase_order_id,
         'purchaseOrderLine' => $line->id,
+        'stockCount' => ($count = StockCount::factory()->create(['site_id' => $site->id]))->id,
+        'stockCountLine' => $count->lines()->create(['item_id' => $supplierItem->item_id, 'qty_expected' => 0])->id,
     ];
 
     $writeRoutes = collect(Route::getRoutes()->getRoutes())

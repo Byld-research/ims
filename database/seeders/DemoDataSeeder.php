@@ -11,10 +11,12 @@ use App\Models\PurchaseOrder;
 use App\Models\ReasonCode;
 use App\Models\Site;
 use App\Models\Stock;
+use App\Models\StockCount;
 use App\Models\StockTransaction;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\PurchaseOrderService;
+use App\Services\StockCountService;
 use App\Services\StockService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -137,6 +139,41 @@ class DemoDataSeeder extends Seeder
 
         $this->openingBalances();
         $this->purchaseOrders();
+        $this->stockCounts();
+    }
+
+    /**
+     * Colorado: a posted class A count from two weeks ago that found one blade missing, and a
+     * consumables count in progress. Skipped when any count exists.
+     */
+    private function stockCounts(): void
+    {
+        if (StockCount::query()->exists()) {
+            return;
+        }
+
+        $counts = app(StockCountService::class);
+        $user = User::query()->where('role', Role::Admin)->firstOrFail();
+        $colorado = Site::query()->where('code', 'BPC002')->firstOrFail();
+        $ids = fn (array $skus) => Item::query()->whereIn('sku', $skus)->pluck('id', 'sku');
+
+        Carbon::setTestNow(now()->subDays(14)->setTime(15, 0));
+        $classA = $counts->create($colorado, $user, 'Class A monthly');
+        $counts->addItems($classA, $ids(['SP-10001', 'SP-10002', 'SP-10004', 'WP-20001'])->values()->all());
+        $counts->startCounting($classA);
+        $lines = $classA->lines()->with('item')->get()->keyBy('item.sku');
+        $counts->recordCounts($classA, [
+            $lines['SP-10001']->id => ['qty' => Stock::query()->where('site_id', $colorado->id)->where('item_id', $lines['SP-10001']->item_id)->value('qty') - 1, 'note' => 'One blade missing from the rack'],
+            $lines['SP-10002']->id => ['qty' => Stock::query()->where('site_id', $colorado->id)->where('item_id', $lines['SP-10002']->item_id)->value('qty')],
+            $lines['SP-10004']->id => ['qty' => Stock::query()->where('site_id', $colorado->id)->where('item_id', $lines['SP-10004']->item_id)->value('qty')],
+            $lines['WP-20001']->id => ['qty' => null],
+        ]);
+        $counts->post($classA, $user);
+        Carbon::setTestNow();
+
+        $consumables = $counts->create($colorado, $user, 'Consumables quarterly');
+        $counts->addItems($consumables, $ids(['CS-30001', 'CS-30002', 'CS-30003', 'CS-30004'])->values()->all());
+        $counts->startCounting($consumables);
     }
 
     /**
@@ -227,7 +264,7 @@ class DemoDataSeeder extends Seeder
         // sku => [BPC001 Georgia final qty, BPC002 Colorado final qty, min level (one value, or [Georgia, Colorado]), kanban bin qty]
         // Revision-specific saw parts get a minimum only where that revision runs: 1.0 in Georgia, 2.0 in Colorado.
         $levels = [
-            'SP-10001' => [2, 1, 2, null],      // saw blade: Colorado short
+            'SP-10001' => [2, 2, 2, null],      // saw blade: a count finds one missing in Colorado, leaving 1 (short)
             'SP-10002' => [4, 6, 4, null],      // linear bearing: one moves to Colorado, leaving Georgia short
             'SP-10003' => [2, 0, 1, null],      // timing belt: Colorado out
             'SP-10004' => [3, 4, 2, null],

@@ -525,15 +525,16 @@ Quantity on open purchase orders is displayed alongside the shortage but is neve
 
 ### 5.6 Cycle counting
 
-1. A manager creates a count for their site and adds lines, either by selecting a category, by criticality class, by kanban flag, or by picking items individually.
+1. A manager creates a count for their site and adds lines, either by selecting a category, by criticality class, by kanban flag, by the items currently due for counting (see the suggested frequency below), or by picking items individually. Lines can be added or removed only while the count is DRAFT.
 2. `qty_expected` is snapshotted when the line is added.
-3. Status moves to COUNTING. Counted quantities are entered per line.
+3. Status moves to COUNTING. Counted quantities are entered per line, on a sheet sorted by bin with the expected quantity hidden unless the counter asks for it, so the count is taken rather than confirmed. Counts can be saved repeatedly before posting.
 4. Posting the count creates one ADJUSTMENT transaction for every line where `qty_counted` differs from the stock quantity at the moment of posting, using the reason code `COUNT`. Lines with no difference create no transaction.
 5. Posting recomputes the difference against the live stock quantity, not against `qty_expected`, because stock may have moved during counting. The difference between `qty_expected` and the live quantity is shown to the user before posting is confirmed.
 6. `stocks.last_counted_at` is set for every counted line in a posted count, including lines with no discrepancy.
-7. Lines with `qty_counted = null` at posting are skipped: no transaction, no `last_counted_at` update. The confirmation screen states how many lines will be skipped.
-8. A posted count is immutable. A cancelled count creates no transactions.
-9. An ADJUSTMENT with reason `OPENING` also sets `stocks.last_counted_at`, since an opening balance is a physical count. Without this every item would show as due for counting on the first day.
+7. A counted line that raises stock from zero for an item with no average cost yet needs a unit cost (5.1); the review screen asks for it on exactly those lines and posting is refused without it.
+8. Lines with `qty_counted = null` at posting are skipped: no transaction, no `last_counted_at` update. The confirmation screen states how many lines will be skipped.
+9. A posted count is immutable. A cancelled count creates no transactions. The count row is locked while posting, so a count cannot be posted twice even by two simultaneous requests.
+10. An ADJUSTMENT with reason `OPENING` also sets `stocks.last_counted_at`, since an opening balance is a physical count. Without this every item would show as due for counting on the first day.
 
 **Suggested count frequency**, surfaced as a due list rather than enforced: class A monthly, class B and C quarterly, kanban items quarterly.
 
@@ -843,6 +844,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.5 | 2026-10-05 | Counts: add lines by "due for counting"; lines change only in DRAFT; blind count sheet sorted by bin; unit cost asked for found items without a cost; posting locked against double posts |
 | 1.4 | 2026-10-05 | Concurrency details in 5.2.4 (lock before insert, READ COMMITTED, retry); `ims:verify-stock` |
 | 1.3 | 2026-10-05 | Site codes corrected: BPC001 is Georgia, BPC002 is Colorado. Machine locations unchanged; their site codes and criterion 33 updated accordingly |
 | 1.2 | 2026-10-05 | Terminology section; *work centre* replaced by *machine* throughout; machine types identified by letter with `last_serial`; machine register with SKU, name, revision and current site, relocatable; parts list lines optionally limited to a revision; machines in Poland excluded; machine register seeded; type C as the reference case; criteria 29–33 |

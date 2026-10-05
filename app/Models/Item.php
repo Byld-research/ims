@@ -44,6 +44,11 @@ class Item extends Model
         return $this->hasMany(StockTransaction::class);
     }
 
+    public function stockCountLines(): HasMany
+    {
+        return $this->hasMany(StockCountLine::class);
+    }
+
     public function supplierItems(): HasMany
     {
         return $this->hasMany(SupplierItem::class);

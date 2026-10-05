@@ -81,6 +81,49 @@ class StockService
     }
 
     /**
+     * Bring stock to a counted quantity (SPEC 5.6.4–6). The difference is taken against the
+     * live quantity under the row lock, not against the snapshot on the count line, because stock
+     * may have moved during counting. Writes a COUNT adjustment only when there is a difference,
+     * and always stamps last_counted_at. Callers run it inside DB::transaction.
+     *
+     * @param  string|null  $unitCost  required only when stock rises from nothing with no average yet
+     */
+    public function countTo(Item $item, Site $site, string $counted, StockCount $stockCount, User $user, ?string $unitCost = null, ?string $note = null): ?StockTransaction
+    {
+        if (DB::transactionLevel() === 0) {
+            throw new \LogicException('Posting a count line must run inside the transaction that posts the count.');
+        }
+
+        if (! preg_match('/^\d{1,11}(\.\d{1,3})?$/', $counted)) {
+            throw new InvalidArgumentException("Counted quantity must be zero or positive with at most 3 decimals, got [{$counted}].");
+        }
+
+        $stock = $this->lockedStock($item, $site);
+        $difference = Decimal::sub($counted, $stock->qty);
+        $transaction = null;
+
+        if (! Decimal::isZero($difference)) {
+            $transaction = $this->post(
+                type: TransactionType::Adjustment,
+                item: $item,
+                site: $site,
+                qtyDelta: $difference,
+                user: $user,
+                incomingCost: Decimal::compare($difference, '0') > 0 ? $unitCost : null,
+                references: [
+                    'reason_code_id' => ReasonCode::adjustment(ReasonCode::COUNT)->id,
+                    'stock_count_id' => $stockCount->id,
+                    'note' => $note,
+                ],
+            );
+        }
+
+        Stock::query()->whereKey($stock->id)->update(['last_counted_at' => now()]);
+
+        return $transaction;
+    }
+
+    /**
      * Stock consumed by a machine, at the site where the machine currently is (SPEC 5.2, 5.8).
      */
     public function issueToMachine(Item $item, Machine $machine, string $qty, User $user, ?string $note = null): StockTransaction
