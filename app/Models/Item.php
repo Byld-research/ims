@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Criticality;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['sku', 'name', 'description', 'category_id', 'uom', 'manufacturer', 'mpn', 'drawing_no', 'criticality', 'is_active'])]
 class Item extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected function casts(): array
     {

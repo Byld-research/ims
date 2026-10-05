@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ReasonCodeScope;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['applies_to', 'code', 'label', 'is_active'])]
 class ReasonCode extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const COUNT = 'COUNT';
 
@@ -33,6 +35,11 @@ class ReasonCode extends Model
     public function scopeFor(Builder $query, ReasonCodeScope $scope): void
     {
         $query->where('applies_to', $scope);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(StockTransaction::class);
     }
 
     public static function adjustment(string $code): self

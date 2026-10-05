@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name', 'contact_email', 'contact_phone', 'lead_time_days', 'notes', 'is_active'])]
 class Supplier extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected function casts(): array
     {

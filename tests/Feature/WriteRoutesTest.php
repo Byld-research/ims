@@ -5,6 +5,7 @@ use App\Models\Item;
 use App\Models\Machine;
 use App\Models\MachineTypeItem;
 use App\Models\PurchaseOrderLine;
+use App\Models\ReasonCode;
 use App\Models\Site;
 use App\Models\StockCount;
 use App\Models\SupplierItem;
@@ -37,6 +38,9 @@ test('an operator is refused on every write route', function () {
         'machine' => Machine::factory()->create(['site_id' => $site->id])->id,
         'purchaseOrder' => ($line = PurchaseOrderLine::factory()->create())->purchase_order_id,
         'purchaseOrderLine' => $line->id,
+        'user' => User::factory()->create()->id,
+        'reasonCode' => ReasonCode::query()->create(['applies_to' => 'ADJUSTMENT', 'code' => 'SWEEP', 'label' => 'Sweep'])->id,
+        'site' => $site->id,
         'stockCount' => ($count = StockCount::factory()->create(['site_id' => $site->id]))->id,
         'stockCountLine' => $count->lines()->create(['item_id' => $supplierItem->item_id, 'qty_expected' => 0])->id,
     ];

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 #[Fillable(['sku', 'machine_type_id', 'name', 'revision', 'site_id', 'is_active'])]
 class Machine extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     public const SKU_PATTERN = '/^(\d{3})([A-Z])$/';
 

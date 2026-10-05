@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\AdjustmentController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\ReasonCodeController;
+use App\Http\Controllers\Admin\SiteController as AdminSiteController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IssueController;
@@ -85,6 +89,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/stock-counts/{stockCount}/review', [StockCountController::class, 'review'])->name('stock-counts.review');
     Route::post('/stock-counts/{stockCount}/post', [StockCountController::class, 'post'])->name('stock-counts.post');
     Route::post('/stock-counts/{stockCount}/cancel', [StockCountController::class, 'cancel'])->name('stock-counts.cancel');
+
+    // Administration (SPEC 6, screen 17)
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('users', AdminUserController::class)->except(['show', 'destroy']);
+        Route::post('/users/{user}/reset-link', [AdminUserController::class, 'sendResetLink'])->name('users.reset-link');
+        Route::resource('reason-codes', ReasonCodeController::class)->except(['show', 'destroy'])->parameters(['reason-codes' => 'reasonCode']);
+        Route::resource('sites', AdminSiteController::class)->except(['show', 'destroy']);
+        Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit.index');
+    });
 
     // Machine register
     Route::resource('machines', MachineController::class)->except('destroy');

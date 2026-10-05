@@ -16,6 +16,27 @@ return [
     'uoms' => ['pc', 'set', 'pair', 'l', 'm', 'kg', 'box', 'roll'],
 
     /*
+    | Daily digest (SPEC 5.9). Each site sends at its own sites.digest_hour, local time.
+    | Administrators have no site; they get one all-sites digest at this hour and time zone.
+    */
+    'admin_digest' => [
+        'hour' => (int) env('ADMIN_DIGEST_HOUR', 7),
+        'timezone' => env('ADMIN_DIGEST_TIMEZONE', 'America/New_York'),
+    ],
+
+    /*
+    | Operations (SPEC 9a). Where nightly backups go, how long they are kept, and who hears
+    | about a failed nightly check.
+    */
+    'backup' => [
+        'path' => env('BACKUP_PATH') ?: storage_path('app/backups'),
+        // Scratch database that ims:restore-test loads a backup into, then drops.
+        'restore_test_database' => env('BACKUP_RESTORE_TEST_DATABASE', 'ims_restore_test'),
+        'keep_days' => (int) env('BACKUP_KEEP_DAYS', 30),
+    ],
+    'ops_email' => env('OPS_EMAIL'),
+
+    /*
     | Development seed accounts (DevUserSeeder). Never used in production.
     */
     'seed' => [

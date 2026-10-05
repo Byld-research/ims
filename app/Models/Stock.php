@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Support\Decimal;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,7 +17,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['item_id', 'site_id', 'min_level', 'bin', 'is_kanban', 'bin_qty'])]
 class Stock extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
+
+    /** @var list<string> Quantity, cost and count dates come from the ledger and counts, not from edits. */
+    protected array $auditExclude = ['qty', 'avg_cost', 'last_counted_at'];
 
     protected function casts(): array
     {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['supplier_id', 'item_id', 'supplier_sku', 'last_price', 'pack_size'])]
 class SupplierItem extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected function casts(): array
     {

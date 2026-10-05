@@ -27,7 +27,7 @@ class Dashboard
 
     private readonly string $timezone;
 
-    public function __construct(private readonly ?Site $site)
+    public function __construct(private readonly ?Site $site, private readonly int $rowLimit = self::ALERT_ROWS)
     {
         $this->timezone = $site?->timezone ?? 'UTC';
     }
@@ -212,7 +212,7 @@ class Dashboard
      */
     private function limited(Builder $query): array
     {
-        return ['total' => (clone $query)->count(), 'rows' => $query->limit(self::ALERT_ROWS)->get()];
+        return ['total' => (clone $query)->count(), 'rows' => $query->limit($this->rowLimit)->get()];
     }
 
     private function today(): Carbon

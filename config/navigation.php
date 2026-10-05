@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\MachineType;
+use App\Models\ReasonCode;
+use App\Models\Site;
 use App\Models\StockCount;
 use App\Models\Supplier;
 use App\Models\User;
@@ -42,8 +44,16 @@ return [
                 'can' => 'viewAny', 'model' => MachineType::class, 'description' => 'Parts lists per type and revision'],
         ]],
 
-        ['label' => 'Admin', 'route' => 'admin.users.index', 'active' => ['admin.*'],
-            'can' => 'viewAny', 'model' => User::class],
+        ['label' => 'Admin', 'links' => [
+            ['label' => 'Users', 'route' => 'admin.users.index', 'active' => ['admin.users.*'],
+                'can' => 'viewAny', 'model' => User::class, 'description' => 'Accounts, roles, sites, digest'],
+            ['label' => 'Sites', 'route' => 'admin.sites.index', 'active' => ['admin.sites.*'],
+                'can' => 'viewAny', 'model' => Site::class, 'description' => 'Time zones and daily digest hour'],
+            ['label' => 'Reason codes', 'route' => 'admin.reason-codes.index', 'active' => ['admin.reason-codes.*'],
+                'can' => 'viewAny', 'model' => ReasonCode::class],
+            ['label' => 'Audit log', 'route' => 'admin.audit.index', 'active' => ['admin.audit.*'],
+                'can' => 'view-audit-log', 'description' => 'Who changed which master data'],
+        ]],
     ],
 
     // The action button: the first entry is the button itself, the rest its menu (SPEC 7, principle 1).

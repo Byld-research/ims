@@ -399,12 +399,12 @@ Unique on `(stock_count_id, item_id)`.
 
 ### 4.16 audit_logs
 
-Master data changes only. Stock movements live in `stock_transactions`.
+Master data changes only. Stock movements live in `stock_transactions`. For `stock`, only settings (min level, bin, kanban) are audited; quantity, cost and count dates come from the ledger and counts. Passwords and login times are never recorded. Administrators read the log under `/admin/audit-log`.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| entity | varchar(40) | item, supplier, user, stock, machine_type, machine |
+| entity | varchar(40) | item, category, supplier, supplier_item, user, stock, machine_type, machine_type_item, machine, reason_code, site |
 | entity_id | bigint | |
 | action | enum CREATE, UPDATE, DELETE | |
 | changes | json | changed fields only, before and after |
@@ -572,7 +572,7 @@ Stock is still recorded in the item's unit of measure, not in bins. The applicat
 
 ### 5.9 Email notifications
 
-A single daily digest, sent by a scheduled job at a configurable hour per site, to every active user with `notify_low_stock = true`, scoped to their site. Administrators receive all sites in one message.
+A single daily digest, sent by a scheduled job at a configurable hour per site, to every active user with `notify_low_stock = true`, scoped to their site. Administrators receive all sites in one message, at the hour and time zone set by `ADMIN_DIGEST_HOUR` and `ADMIN_DIGEST_TIMEZONE` (default 07:00 America/New_York), since they belong to no site. A digest is sent at most once per site, or once for the administrators, per local day.
 
 Contents: items below minimum, kanban items needing refill, purchase orders past their ETA with nothing received, and purchase orders ordered but never confirmed.
 
@@ -722,6 +722,22 @@ Type C, the Truss Saw, is the reference case for the parts list, demo data and a
 
 ---
 
+## 9a. Operations
+
+| Area | Requirement |
+|---|---|
+| Hosting | central server; nothing runs on hardware at a site |
+| Scheduler | cron runs `php artisan schedule:run` every minute; it sends the digests hourly per site and runs the nightly jobs below |
+| Backups | `ims:backup` nightly: a gzipped `mariadb-dump` including triggers, kept `BACKUP_KEEP_DAYS` days (default 30), stored off the database server |
+| Restore | `ims:restore-test` loads the newest backup into a scratch database, checks every table, both ledger triggers and a full ledger replay, then drops it; run before go-live and after any change to the backup set-up |
+| Integrity | `ims:verify-stock` nightly; failures of nightly jobs are emailed to `OPS_EMAIL` |
+| Sessions | session fixation protection on login; idle timeout `SESSION_LIFETIME` minutes (60 recommended); secure cookies over HTTPS |
+| Passwords | Laravel hashing; at least 12 characters with letters and digits in production; no self-registration |
+| Transport | HTTPS only in production; security headers on every response (frame, content-type, referrer, permissions) |
+| Accounts | administrators cannot remove their own access, and the last active administrator cannot be removed |
+
+---
+
 ## 10. Values to be supplied before go-live
 
 These are configuration, not code. Build the application so they can be entered through the interface or a seeder, and do not hard-code them.
@@ -844,6 +860,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.6 | 2026-10-05 | Operations section 9a (scheduler, backups with restore test, nightly integrity check, sessions, passwords, HTTPS); administrators' digest hour; audited entities listed; digest at most once per day |
 | 1.5 | 2026-10-05 | Counts: add lines by "due for counting"; lines change only in DRAFT; blind count sheet sorted by bin; unit cost asked for found items without a cost; posting locked against double posts |
 | 1.4 | 2026-10-05 | Concurrency details in 5.2.4 (lock before insert, READ COMMITTED, retry); `ims:verify-stock` |
 | 1.3 | 2026-10-05 | Site codes corrected: BPC001 is Georgia, BPC002 is Colorado. Machine locations unchanged; their site codes and criterion 33 updated accordingly |

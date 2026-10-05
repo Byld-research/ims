@@ -26,6 +26,7 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - **Authorisation through policies only.** A manager writes only where `site_id` is their own (`User::canWriteSite`). The single exception is a transfer, authorised against the receiving site (`StockPolicy::transfer`).
 - **Statuses, types and roles are enums in `App\Enums`.** `PurchaseOrderStatus::transitions()` mirrors the SPEC 5.3 diagram.
 - **The current site comes from `App\Support\CurrentSite`.** Never assume a site silently. `null` means the administrators' consolidated view.
+- **Master data models use the `Auditable` trait.** New master data models need it too; list ledger-owned or secret attributes in `$auditExclude`.
 - **Nothing is hard-deleted.** Records are deactivated (`is_active`).
 - **Display formatting goes through `App\Support\Format`.** Timestamps are stored in UTC and shown in the site's time zone.
 - **New screens go into a section of `config/navigation.php`** (Stock, Purchasing, Machines) or into `actions` (stock movements). Don't add top-level entries. A link appears once its route exists and the user passes its `can`. Page headers keep only page-level actions (Export CSV, New …); navigation links belong in the menu.
@@ -44,4 +45,4 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - [x] Stage 5: issue to machine / general (three-step form), transfers entered by the receiving site, machine consumption history, concurrent opposite-transfer test
 - [x] Stage 6: stock counts (add by category/class/kanban/due/item, blind sheet by bin, review against live stock, post, double-post protection)
 - [x] Stage 7: dashboard (alerts and figures), kanban view, CSV on every list incl. movement histories, grouped menu with an Issue action button
-- [ ] Stage 8: daily digest, audit log, hardening
+- [x] Stage 8: daily digest, audit log, admin screens (users, sites, reason codes, audit log), backups with restore test, security headers, schedule
