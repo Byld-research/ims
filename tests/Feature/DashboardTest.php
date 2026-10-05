@@ -158,8 +158,56 @@ test('the dashboard renders alerts and figures for the manager’s site', functi
         ->assertSee('$412.00');
 });
 
-test('a calm message when nothing needs attention', function () {
-    $this->actingAs($this->manager)->get('/')->assertOk()->assertSee('Nothing needs attention');
+test('with nothing to act on, every status tile reads all clear', function () {
+    $response = $this->actingAs($this->manager)->get('/')->assertOk();
+
+    expect(substr_count($response->getContent(), 'All clear'))->toBe(5);
+    $response->assertSee('Every item with a minimum is above it.')->assertSee('No late or stuck orders.');
+});
+
+test('stock to act on is ordered worst first: out of stock, class A, then least left', function () {
+    stocked('LOW-C-HALF', '1', '1', ['min_level' => 2], 'C');
+    stocked('LOW-C-TENTH', '1', '1', ['min_level' => 10], 'C');
+    stocked('LOW-A', '3', '1', ['min_level' => 4], 'A');
+    stocked('OUT-B', '0', '1', ['min_level' => 1], 'B');
+    stocked('KANBAN', '2', '1', ['is_kanban' => true, 'bin_qty' => 5], 'C');
+
+    $rows = dashboard()->attention()['rows'];
+
+    expect($rows->pluck('stock.item.sku')->all())->toBe(['OUT-B', 'LOW-A', 'LOW-C-TENTH', 'KANBAN', 'LOW-C-HALF'])
+        ->and($rows->pluck('severity')->all())->toBe(['critical', 'serious', 'warning', 'warning', 'warning']);
+});
+
+test('the most used items over 30 days, including movers nobody set a minimum for', function () {
+    $blade = stocked('SP-10001', '10', '400', ['min_level' => 2]);
+    $orings = stocked('CS-30005', '20', '27', []);
+    $this->stock->issueToMachine($blade, $this->saw004, '1', $this->manager);
+    $this->stock->issueToMachine($orings, $this->saw004, '3', $this->manager);
+
+    $movers = dashboard()->movers();
+
+    expect($movers->pluck('stock.item.sku')->all())->toBe(['SP-10001', 'CS-30005'])
+        ->and($movers->last()['qty'])->toBe('3.000');
+
+    $this->actingAs($this->manager)->get('/')
+        ->assertSee('Most used in the last 30 days')
+        ->assertSee('No minimum set')
+        ->assertSee('Set a minimum');
+});
+
+test('weekly usage covers twelve weeks, oldest first', function () {
+    $filter = stocked('CS-30001', '50', '41.3');
+    $this->travelTo(now()->subWeeks(5)->subDay());
+    $this->stock->issueToMachine($filter, $this->saw004, '4', $this->manager);
+    $this->travelBack();
+    $this->stock->issueToMachine($filter, $this->saw004, '2', $this->manager);
+
+    $series = dashboard()->weeklyUsage([$filter->id])[$filter->id.':'.$this->colorado->id];
+
+    expect($series)->toHaveCount(12)
+        ->and($series[11])->toBe(2.0)
+        ->and($series[6])->toBe(4.0)
+        ->and(array_sum($series))->toBe(6.0);
 });
 
 test('administrators see the consolidated view with site codes', function () {

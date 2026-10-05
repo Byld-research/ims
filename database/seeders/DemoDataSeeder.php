@@ -237,6 +237,7 @@ class DemoDataSeeder extends Seeder
         [30, 'BPC001', 'SP-10004', 1, '003C'],
         [60, 'BPC001', 'WP-20002', 1, '004A'], [20, 'BPC001', 'WP-20002', 1, '005A'],
         [40, 'BPC001', 'CS-30002', 20, '004A'],
+        [70, 'BPC002', 'CS-30005', 1, '004C'], [45, 'BPC002', 'CS-30005', 2, '004C'], [21, 'BPC002', 'CS-30005', 1, '004C'], [6, 'BPC002', 'CS-30005', 2, '004C'],
         [33, 'BPC001', 'CS-30004', 30, '004B'], [15, 'BPC001', 'CS-30004', 20, 'FACILITY'],
     ];
 
@@ -279,6 +280,7 @@ class DemoDataSeeder extends Seeder
             'CS-30003' => [20, 8, null, 10],
             'CS-30004' => [400, 250, null, 100],
             'TL-40002' => [1, 1, null, null],
+            'CS-30005' => [6, 9, null, null],  // O-ring kits: used every few weeks on 004C, no minimum yet
         ];
 
         $consumed = [];

@@ -39,3 +39,20 @@
 }
 
 [x-cloak] { display: none !important; }
+
+/*
+| Status palette (dataviz reference, fixed): reserved for state, always paired with an icon and
+| a text label, never used as text colour. Tints are for backgrounds only.
+*/
+:root {
+    --status-critical: #d03b3b;
+    --status-serious: #ec835a;
+    --status-warning: #fab219;
+    --status-good: #0ca30c;
+    --status-critical-tint: #fdeded;
+    --status-serious-tint: #fdf1eb;
+    --status-warning-tint: #fff7e3;
+    --status-good-tint: #ecf8ec;
+    --meter-track: #e7e6e2;
+    --status-ok: #a8a7a0; /* a healthy level: neutral, not green, so it does not compete with problems */
+}

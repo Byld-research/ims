@@ -173,7 +173,7 @@ Details: [Stock counts](docs/user-guide/07-stock-counts.md).
 
 | What | Where | When |
 |---|---|---|
-| Out of stock, below minimum (class A first), kanban refills, late orders, unconfirmed orders, orders partly received for over 30 days, counts due | Dashboard | Always current |
+| Status tiles (out of stock, below minimum, kanban refills, orders to chase, counts due); shortages worst first with level bars and 12-week usage; the most used items of the last 30 days, flagging fast movers without a minimum | Dashboard | Always current |
 | Below minimum, kanban refills, late orders, unconfirmed orders | Daily email digest | Once a day at the site's digest hour (default 07:00 local), **only when something needs attention**, only to users who switched it on |
 | Same, all sites in one message | Administrators' digest | Default 07:00 New York time |
 

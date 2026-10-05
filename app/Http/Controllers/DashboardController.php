@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PurchaseOrderLine;
 use App\Services\Dashboard;
 use App\Support\CurrentSite;
 use Illuminate\View\View;
 
 /**
- * Alerts and figures for the selected site; administrators may view all sites (SPEC 8).
+ * Alerts first, then the items that are moving, then the figures (SPEC 8).
  */
 class DashboardController extends Controller
 {
@@ -15,11 +16,19 @@ class DashboardController extends Controller
     {
         $dashboard = new Dashboard($currentSite->get());
         $alerts = $dashboard->alerts();
+        $attention = $dashboard->attention();
+        $movers = $dashboard->movers();
+
+        $itemIds = $attention['rows']->pluck('stock.item_id')->merge($movers->pluck('item_id'))->unique()->values()->all();
 
         return view('dashboard', [
             'site' => $currentSite->get(),
             'alerts' => $alerts,
-            'onOrder' => $dashboard->onOrderFor($alerts),
+            'attention' => $attention,
+            'movers' => $movers,
+            'orders' => $dashboard->ordersToChase($alerts),
+            'usage' => $dashboard->weeklyUsage($itemIds),
+            'onOrder' => PurchaseOrderLine::onOrder($itemIds, $currentSite->id()),
             'totalValue' => $dashboard->totalValue(),
             'byCategory' => $dashboard->valueByCategory(),
             'coverage' => $dashboard->minimumCoverage(),
