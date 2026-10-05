@@ -1,3 +1,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .card { @apply bg-white shadow-sm sm:rounded-lg; }
+    .card-body { @apply p-4 sm:p-6; }
+    .card-title { @apply text-base font-semibold text-gray-900; }
+
+    .form-input { @apply block w-full border-gray-300 rounded-md shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500; }
+    .form-checkbox { @apply rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500; }
+
+    .btn { @apply inline-flex items-center justify-center gap-1 px-4 py-2 rounded-md font-semibold text-xs uppercase tracking-widest transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50; }
+    .btn-primary { @apply btn bg-gray-800 text-white hover:bg-gray-700; }
+    .btn-secondary { @apply btn bg-white border border-gray-300 text-gray-700 shadow-sm hover:bg-gray-50; }
+    .btn-sm { @apply px-2.5 py-1.5; }
+    .btn-link-danger { @apply text-sm text-red-600 hover:text-red-800 hover:underline; }
+
+    .link { @apply text-indigo-600 hover:text-indigo-800 hover:underline; }
+
+    .table-wrap { @apply overflow-x-auto; }
+    .table { @apply min-w-full divide-y divide-gray-200 text-sm; }
+    .table thead th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 bg-gray-50 whitespace-nowrap; }
+    .table tbody td { @apply px-3 py-2 text-gray-800 align-top; }
+    .table tbody tr { @apply border-t border-gray-100; }
+    .table tbody tr:hover { @apply bg-gray-50; }
+    .num { @apply text-right tabular-nums whitespace-nowrap; }
+
+    .badge { @apply inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium; }
+    .badge-gray { @apply badge bg-gray-100 text-gray-700; }
+    .badge-red { @apply badge bg-red-100 text-red-700; }
+    .badge-amber { @apply badge bg-amber-100 text-amber-800; }
+    .badge-green { @apply badge bg-green-100 text-green-700; }
+    .badge-indigo { @apply badge bg-indigo-100 text-indigo-700; }
+
+    .dl { @apply grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm; }
+    .dl dt { @apply text-gray-500; }
+    .dl dd { @apply sm:col-span-2 text-gray-900; }
+}
+
+[x-cloak] { display: none !important; }

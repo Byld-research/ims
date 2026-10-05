@@ -1,10 +1,15 @@
 <?php
 
 use App\Models\Category;
+use App\Models\Item;
+use App\Models\MachineTypeItem;
 use App\Models\ReasonCode;
 use App\Models\Site;
+use App\Models\SupplierItem;
 use App\Models\User;
+use App\Models\WorkCenter;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoDataSeeder;
 
 test('seeders are idempotent', function () {
     config(['ims.seed.admin_password' => 'secret', 'ims.seed.manager_password' => 'secret']);
@@ -35,4 +40,15 @@ test('development users are skipped when no passwords are configured', function 
     $this->seed(DatabaseSeeder::class);
 
     expect(User::count())->toBe(0);
+});
+
+test('the demo seeder builds a consistent catalogue and is idempotent', function () {
+    $this->seed(DemoDataSeeder::class);
+    $first = [Item::count(), SupplierItem::count(), MachineTypeItem::count(), WorkCenter::count()];
+
+    $this->seed(DemoDataSeeder::class);
+
+    expect([Item::count(), SupplierItem::count(), MachineTypeItem::count(), WorkCenter::count()])
+        ->toBe($first)
+        ->and(Item::query()->whereRelation('category', 'is_structural', true)->count())->toBe(0);
 });

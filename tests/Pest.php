@@ -1,5 +1,10 @@
 <?php
 
+use App\Enums\TransactionType;
+use App\Models\Item;
+use App\Models\Site;
+use App\Models\StockTransaction;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -29,22 +34,19 @@ pest()->extend(TestCase::class)
 |
 */
 
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Functions
-|--------------------------------------------------------------------------
-|
-| While Pest is very powerful out-of-the-box, you may have some testing code specific to your
-| project that you don't want to repeat in every file. Here you can also expose helpers as
-| global functions to help you to reduce the number of lines of code in your test files.
-|
-*/
-
-function something()
+function ledgerRow(Item $item, Site $site, array $attributes = []): StockTransaction
 {
-    // ..
+    // Direct ledger insert for tests that only need "this record has history".
+    return StockTransaction::query()->create([
+        'type' => TransactionType::Adjustment,
+        'item_id' => $item->id,
+        'site_id' => $site->id,
+        'qty_delta' => '1.000',
+        'unit_cost' => '1.0000',
+        'value' => '1.0000',
+        'qty_after' => '1.000',
+        'avg_cost_after' => '1.0000',
+        'user_id' => User::factory()->create()->id,
+        ...$attributes,
+    ]);
 }
