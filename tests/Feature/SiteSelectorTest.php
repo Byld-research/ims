@@ -14,7 +14,7 @@ test('a manager works at their own site', function () {
 
     $this->actingAs($manager)->get('/')
         ->assertOk()
-        ->assertSee('BPC002 · BPC Georgia')
+        ->assertSee('BPC001 · BPC Georgia')
         ->assertDontSee('name="site"', false);
 
     expect(app(CurrentSite::class)->id())->toBe($this->georgia->id);
@@ -36,12 +36,12 @@ test('an operator cannot switch site', function () {
         ->assertForbidden();
 });
 
-test('an administrator defaults to the first active site', function () {
+test('an administrator defaults to the first active site by code', function () {
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)->get('/')->assertOk()->assertSee('name="site"', false);
 
-    expect(app(CurrentSite::class)->id())->toBe($this->colorado->id);
+    expect(app(CurrentSite::class)->id())->toBe($this->georgia->id);
 });
 
 test('an administrator can switch to another site and to the consolidated view', function () {
@@ -49,11 +49,11 @@ test('an administrator can switch to another site and to the consolidated view',
 
     $this->actingAs($admin)
         ->from('/')
-        ->post(route('site.select'), ['site' => $this->georgia->id])
+        ->post(route('site.select'), ['site' => $this->colorado->id])
         ->assertRedirect('/');
 
-    $this->get('/')->assertSee('BPC Georgia');
-    expect(session(CurrentSite::SESSION_KEY))->toBe($this->georgia->id);
+    $this->get('/')->assertSee('BPC Colorado');
+    expect(session(CurrentSite::SESSION_KEY))->toBe($this->colorado->id);
 
     $this->post(route('site.select'), ['site' => CurrentSite::ALL]);
 
