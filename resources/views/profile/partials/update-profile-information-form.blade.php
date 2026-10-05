@@ -5,13 +5,9 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
+            {{ __('Your email address, role and site are managed by an administrator.') }}
         </p>
     </header>
-
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
 
     <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
         @csrf
@@ -23,29 +19,19 @@
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+        <dl class="grid grid-cols-3 gap-2 text-sm">
+            <dt class="text-gray-500">{{ __('Email') }}</dt>
+            <dd class="col-span-2 text-gray-900">{{ $user->email }}</dd>
+            <dt class="text-gray-500">{{ __('Role') }}</dt>
+            <dd class="col-span-2 text-gray-900">{{ $user->role->label() }}</dd>
+            <dt class="text-gray-500">{{ __('Site') }}</dt>
+            <dd class="col-span-2 text-gray-900">{{ $user->site?->code ?? __('All sites') }}</dd>
+        </dl>
 
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
-                        </button>
-                    </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </div>
+        <label for="notify_low_stock" class="inline-flex items-center">
+            <input id="notify_low_stock" type="checkbox" name="notify_low_stock" value="1" @checked(old('notify_low_stock', $user->notify_low_stock)) class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+            <span class="ms-2 text-sm text-gray-600">{{ __('Send me the daily low-stock digest') }}</span>
+        </label>
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
