@@ -34,6 +34,7 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - **List views support `?export=csv` via `App\Support\CsvExport`.** Every list needs one (SPEC 7).
 - **Pick items with `<x-item-picker>`**, backed by `items.search`.
 - **`tests/Feature/WriteRoutesTest.php` sweeps every authenticated write route as an operator.** A new route parameter needs a fixture there.
+- **User documentation lives in `README.md` (processes, roles) and `docs/user-guide/`** (one chapter per task, screenshots in `images/`). A change to a screen, a label or a message updates the matching chapter; `11-messages.md` quotes messages word for word.
 - **Every business rule in SPEC 5 and every acceptance criterion in SPEC 13 needs a feature test.**
 
 ## Build progress (SPEC 12)
