@@ -9,6 +9,10 @@ use App\Http\Controllers\MachineController;
 use App\Http\Controllers\MachineTypeController;
 use App\Http\Controllers\MachineTypeItemController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseOrderActionController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\PurchaseOrderLineController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\SiteSelectionController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockLevelController;
@@ -48,6 +52,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/machine-types/{machineType}/import', [MachineTypeItemController::class, 'import'])->name('machine-types.import');
     Route::put('/machine-type-items/{machineTypeItem}', [MachineTypeItemController::class, 'update'])->name('machine-type-items.update');
     Route::delete('/machine-type-items/{machineTypeItem}', [MachineTypeItemController::class, 'destroy'])->name('machine-type-items.destroy');
+
+    // Purchase orders
+    Route::resource('purchase-orders', PurchaseOrderController::class)->only(['index', 'create', 'store', 'show', 'update'])
+        ->parameters(['purchase-orders' => 'purchaseOrder']);
+    Route::post('/purchase-orders/{purchaseOrder}/lines', [PurchaseOrderLineController::class, 'store'])->name('purchase-orders.lines.store');
+    Route::put('/purchase-order-lines/{purchaseOrderLine}', [PurchaseOrderLineController::class, 'update'])->name('purchase-order-lines.update');
+    Route::delete('/purchase-order-lines/{purchaseOrderLine}', [PurchaseOrderLineController::class, 'destroy'])->name('purchase-order-lines.destroy');
+    Route::post('/purchase-order-lines/{purchaseOrderLine}/close-short', [PurchaseOrderActionController::class, 'closeShort'])->name('purchase-order-lines.close-short');
+    foreach (['order', 'confirm', 'ship', 'cancel', 'close'] as $action) {
+        Route::post("/purchase-orders/{purchaseOrder}/{$action}", [PurchaseOrderActionController::class, $action])->name("purchase-orders.{$action}");
+    }
+    Route::get('/purchase-orders/{purchaseOrder}/receive', [ReceiptController::class, 'create'])->name('purchase-orders.receive');
+    Route::post('/purchase-orders/{purchaseOrder}/receive', [ReceiptController::class, 'store'])->name('purchase-orders.receive.store');
 
     // Machine register
     Route::resource('machines', MachineController::class)->except('destroy');

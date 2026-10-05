@@ -23,6 +23,10 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
+// No RefreshDatabase: worker processes must see committed rows. See tests/Concurrency/Concurrency.php.
+pest()->extend(TestCase::class)
+    ->in('Concurrency');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

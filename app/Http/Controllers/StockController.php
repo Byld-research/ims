@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Criticality;
 use App\Models\Category;
 use App\Models\Item;
+use App\Models\PurchaseOrderLine;
 use App\Models\Site;
 use App\Models\Stock;
 use App\Support\CsvExport;
@@ -40,8 +41,12 @@ class StockController extends Controller
             return $this->export($query, $sites, $currentSite->get());
         }
 
+        $items = $query->paginate(50)->withQueryString();
+
         return response()->view('stock.index', [
-            'items' => $query->paginate(50)->withQueryString(),
+            'items' => $items,
+            // Shown next to shortages, never added to stock (SPEC 5.5).
+            'onOrder' => PurchaseOrderLine::onOrder($items->pluck('id')->all(), $currentSite->id()),
             'sites' => $sites,
             'site' => $currentSite->get(),
             'currentSiteId' => $currentSite->id(),

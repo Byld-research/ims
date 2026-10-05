@@ -6,6 +6,7 @@ use App\Enums\ReasonCodeScope;
 use App\Enums\TransactionType;
 use App\Exceptions\StockException;
 use App\Models\Item;
+use App\Models\PurchaseOrderLine;
 use App\Models\ReasonCode;
 use App\Models\Site;
 use App\Models\Stock;
@@ -75,6 +76,28 @@ class StockService
 
             return $transaction;
         }, self::ATTEMPTS);
+    }
+
+    /**
+     * Goods received against a purchase order line, at the order's site and the line's net price
+     * (SPEC 5.2). The caller locks the order and line and updates qty_received in the same
+     * database transaction; see PurchaseOrderService::receive().
+     */
+    public function receipt(PurchaseOrderLine $line, Site $site, string $qty, User $user): StockTransaction
+    {
+        if (DB::transactionLevel() === 0) {
+            throw new \LogicException('A receipt must run inside the transaction that updates its order line.');
+        }
+
+        return $this->post(
+            type: TransactionType::Receipt,
+            item: $line->item,
+            site: $site,
+            qtyDelta: $this->positive($qty),
+            user: $user,
+            incomingCost: $line->unit_price,
+            references: ['purchase_order_line_id' => $line->id],
+        );
     }
 
     /**

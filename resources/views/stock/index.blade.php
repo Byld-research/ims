@@ -56,6 +56,7 @@
                             <th class="num">{{ __('Value') }}</th>
                             <th>{{ __('Status') }}</th>
                         @endif
+                        <th class="num">{{ __('On order') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,10 +109,12 @@
                                     @endif
                                 </td>
                             @endif
+                            @php($ordered = collect($onOrder[$item->id] ?? [])->reduce(fn ($sum, $q) => bcadd($sum, $q, 3), '0'))
+                            <td class="num text-indigo-700">{{ bccomp($ordered, '0', 3) > 0 ? \App\Support\Format::qty($ordered) : '' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ 4 + $sites->count() + ($site ? 4 : 0) }}" class="py-6 text-center text-gray-500">
+                            <td colspan="{{ 5 + $sites->count() + ($site ? 4 : 0) }}" class="py-6 text-center text-gray-500">
                                 {{ __('No items match.') }}
                                 @can('create', App\Models\Item::class)
                                     <a class="link" href="{{ route('items.create') }}">{{ __('Create one') }}</a>

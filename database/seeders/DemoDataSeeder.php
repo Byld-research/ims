@@ -6,11 +6,13 @@ use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\MachineType;
+use App\Models\PurchaseOrder;
 use App\Models\ReasonCode;
 use App\Models\Site;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\PurchaseOrderService;
 use App\Services\StockService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -131,6 +133,51 @@ class DemoDataSeeder extends Seeder
         }
 
         $this->openingBalances();
+        $this->purchaseOrders();
+    }
+
+    /**
+     * Orders in every interesting state, mostly around the Truss Saw 004C in Colorado.
+     * Skipped when any order exists, so re-running adds nothing.
+     */
+    private function purchaseOrders(): void
+    {
+        if (PurchaseOrder::query()->exists()) {
+            return;
+        }
+
+        $orders = app(PurchaseOrderService::class);
+        $user = User::query()->where('role', Role::Admin)->firstOrFail();
+        $sites = Site::query()->pluck('id', 'code');
+        $colorado = Site::query()->findOrFail($sites['BPC002']);
+        $georgia = Site::query()->findOrFail($sites['BPC001']);
+        $supplier = fn (string $name) => Supplier::query()->where('name', $name)->firstOrFail();
+        $item = fn (string $sku) => Item::query()->where('sku', $sku)->firstOrFail();
+
+        // Colorado, Kraków: confirmed, ETA already passed, nothing received (a dashboard alert).
+        $late = $orders->create($supplier('Kraków warehouse'), $colorado, $user, 'Blades and light curtain for 004C.');
+        $orders->addLine($late, $item('SP-10001'), '4', null);
+        $orders->addLine($late, $item('SP-10009'), '1', null);
+        $orders->markOrdered($late);
+        $orders->confirm($late, now()->subDays(5));
+
+        // Colorado, Grainger: shipped, then partly received.
+        $partial = $orders->create($supplier('Grainger'), $colorado, $user);
+        $orders->addLine($partial, $item('CS-30001'), '12', null);
+        $orders->addLine($partial, $item('SP-10004'), '2', null);
+        $orders->markOrdered($partial);
+        $orders->confirm($partial, now()->addDays(2));
+        $orders->ship($partial, 'https://www.ups.com/track?tracknum=1Z999AA10123456784');
+        $orders->receive($partial->fresh(), [$partial->lines()->where('item_id', $item('CS-30001')->id)->value('id') => '6'], $user);
+
+        // Colorado, McMaster-Carr: sent, never confirmed.
+        $unconfirmed = $orders->create($supplier('McMaster-Carr'), $colorado, $user);
+        $orders->addLine($unconfirmed, $item('SP-10003'), '2', null);
+        $orders->markOrdered($unconfirmed);
+
+        // Georgia: a draft still being prepared.
+        $draft = $orders->create($supplier('Kraków warehouse'), $georgia, $user, 'Spares for 003C (rev 1.0).');
+        $orders->addLine($draft, $item('SP-10011'), '1', null);
     }
 
     /**

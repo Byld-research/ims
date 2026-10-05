@@ -37,6 +37,7 @@
                                 <th class="num">{{ __('Quantity') }}</th>
                                 <th class="num">{{ __('Avg cost') }}</th>
                                 <th class="num">{{ __('Value') }}</th>
+                                <th class="num">{{ __('On order') }}</th>
                                 <th class="num">{{ __('Min level') }}</th>
                                 <th>{{ __('Bin') }}</th>
                                 <th></th>
@@ -50,6 +51,7 @@
                                     <td class="num">{{ \App\Support\Format::qty($stock?->qty ?? 0) }} {{ $item->uom }}</td>
                                     <td class="num">{{ $stock ? \App\Support\Format::money($stock->avg_cost) : '—' }}</td>
                                     <td class="num">{{ $stock ? \App\Support\Format::money($stock->value()) : '—' }}</td>
+                                    <td class="num text-indigo-700">{{ isset($onOrder[$site->id]) ? \App\Support\Format::qty($onOrder[$site->id]) : '—' }}</td>
                                     <td class="num">
                                         @if ($stock?->is_kanban)
                                             {{ __('kanban, bin :q', ['q' => \App\Support\Format::qty($stock->bin_qty)]) }}
@@ -143,6 +145,27 @@
                 </div>
             </section>
         </div>
+
+        @if ($openOrders->isNotEmpty())
+            <section class="card">
+                <div class="card-body pb-2"><h3 class="card-title">{{ __('On open orders') }}</h3></div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <tbody>
+                            @foreach ($openOrders as $line)
+                                <tr>
+                                    <td class="font-mono"><a class="link" href="{{ route('purchase-orders.show', $line->purchaseOrder) }}">{{ $line->purchaseOrder->number }}</a></td>
+                                    <td>{{ $line->purchaseOrder->supplier->name }} → {{ $line->purchaseOrder->site->code }}</td>
+                                    <td><x-po-status :status="$line->purchaseOrder->status" /></td>
+                                    <td>{{ $line->purchaseOrder->eta ? __('ETA :date', ['date' => \App\Support\Format::date($line->purchaseOrder->eta)]) : '' }}</td>
+                                    <td class="num">{{ __(':qty outstanding', ['qty' => \App\Support\Format::qty($line->outstanding())]) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
 
         <section class="card" id="history">
             <div class="card-body pb-2 flex flex-wrap items-center justify-between gap-3">

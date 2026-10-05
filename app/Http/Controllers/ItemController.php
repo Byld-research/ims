@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PurchaseOrderStatus;
 use App\Http\Requests\ItemRequest;
 use App\Models\Category;
 use App\Models\Item;
+use App\Models\PurchaseOrderLine;
 use App\Models\Site;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,14 @@ class ItemController extends Controller
             'sites' => Site::query()->active()->orderBy('code')->get(),
             'stocksBySite' => $item->stocks->keyBy('site_id'),
             'historySite' => $historySite,
+            'onOrder' => PurchaseOrderLine::onOrder([$item->id])[$item->id] ?? [],
+            'openOrders' => PurchaseOrderLine::query()
+                ->with(['purchaseOrder.supplier', 'purchaseOrder.site'])
+                ->where('item_id', $item->id)
+                ->where('is_closed', false)
+                ->whereHas('purchaseOrder', fn ($q) => $q->whereIn('status', array_filter(PurchaseOrderStatus::cases(), fn ($s) => $s->acceptsReceipts())))
+                ->get()
+                ->filter(fn (PurchaseOrderLine $line) => bccomp($line->outstanding(), '0', 3) > 0),
             'transactions' => $item->transactions()
                 ->with(['site', 'counterSite', 'machine', 'reasonCode', 'user', 'purchaseOrderLine.purchaseOrder'])
                 ->when($historySite, fn ($q, $siteId) => $q->where('site_id', $siteId))
