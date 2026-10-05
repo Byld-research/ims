@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('value', 14, 4);
             $table->decimal('qty_after', 14, 3);
             $table->decimal('avg_cost_after', 14, 4);
-            $table->foreignId('work_center_id')->nullable()->constrained('work_centers');
+            $table->foreignId('machine_id')->nullable()->constrained('machines');
             $table->foreignId('counter_site_id')->nullable()->constrained('sites');
             $table->foreignId('purchase_order_line_id')->nullable()->constrained('purchase_order_lines');
             $table->foreignId('stock_count_id')->nullable()->constrained('stock_counts');
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
 
             $table->index(['item_id', 'site_id', 'created_at']);
-            $table->index(['work_center_id', 'created_at']);
+            $table->index(['machine_id', 'created_at']);
             $table->index(['type', 'created_at']);
         });
 

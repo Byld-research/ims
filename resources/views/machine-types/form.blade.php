@@ -8,12 +8,16 @@
             @csrf
             @if ($machineType->exists) @method('PUT') @endif
 
-            <div class="grid gap-5 sm:grid-cols-3">
-                <x-field name="code" :label="__('Code')" required :hint="__('e.g. TRUSS_SAW')">
-                    <x-input name="code" :value="$machineType->code" required maxlength="30" class="font-mono uppercase" autofocus />
+            <div class="grid gap-5 sm:grid-cols-4">
+                <x-field name="code" :label="__('Letter')" required :hint="__('e.g. C')">
+                    <x-input name="code" :value="$machineType->code" required maxlength="1" class="font-mono uppercase" autofocus
+                             :readonly="$machineType->exists && $machineType->machines()->exists()" />
                 </x-field>
                 <x-field name="name" :label="__('Name')" required class="sm:col-span-2">
                     <x-input name="name" :value="$machineType->name" required maxlength="150" />
+                </x-field>
+                <x-field name="last_serial" :label="__('Last serial')" :hint="__('Highest number issued, incl. machines not in the register.')">
+                    <x-input type="number" name="last_serial" :value="$machineType->last_serial ?? 0" min="0" max="999" class="font-mono" />
                 </x-field>
             </div>
 

@@ -26,9 +26,9 @@ class Site extends Model
         $query->where('is_active', true);
     }
 
-    public function workCenters(): HasMany
+    public function machines(): HasMany
     {
-        return $this->hasMany(WorkCenter::class);
+        return $this->hasMany(Machine::class);
     }
 
     public function stocks(): HasMany

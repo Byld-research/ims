@@ -5,7 +5,7 @@ namespace App\Enums;
 enum TransactionType: string
 {
     case Receipt = 'RECEIPT';
-    case IssueWorkCenter = 'ISSUE_WORK_CENTER';
+    case IssueMachine = 'ISSUE_MACHINE';
     case IssueGeneral = 'ISSUE_GENERAL';
     case TransferOut = 'TRANSFER_OUT';
     case TransferIn = 'TRANSFER_IN';
@@ -15,7 +15,7 @@ enum TransactionType: string
     {
         return match ($this) {
             self::Receipt => 'Receipt',
-            self::IssueWorkCenter => 'Issue to work centre',
+            self::IssueMachine => 'Issue to machine',
             self::IssueGeneral => 'General issue',
             self::TransferOut => 'Transfer out',
             self::TransferIn => 'Transfer in',
@@ -30,7 +30,7 @@ enum TransactionType: string
     {
         return match ($this) {
             self::Receipt, self::TransferIn => true,
-            self::IssueWorkCenter, self::IssueGeneral, self::TransferOut => false,
+            self::IssueMachine, self::IssueGeneral, self::TransferOut => false,
             self::Adjustment => null,
         };
     }

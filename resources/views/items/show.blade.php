@@ -99,6 +99,7 @@
                         <thead>
                             <tr>
                                 <th>{{ __('Machine type') }}</th>
+                                <th>{{ __('Revision') }}</th>
                                 <th>{{ __('Reference') }}</th>
                                 <th class="num">{{ __('Qty / machine') }}</th>
                             </tr>
@@ -108,16 +109,17 @@
                                 <tr>
                                     <td>
                                         @can('view', $machineType)
-                                            <a class="link" href="{{ route('machine-types.show', $machineType) }}">{{ $machineType->name }}</a>
+                                            <a class="link" href="{{ route('machine-types.show', $machineType) }}">{{ $machineType->label() }}</a>
                                         @else
-                                            {{ $machineType->name }}
+                                            {{ $machineType->label() }}
                                         @endcan
                                     </td>
+                                    <td>{{ $machineType->pivot->revision ?? __('All') }}</td>
                                     <td>{{ $machineType->pivot->reference ?? '—' }}</td>
                                     <td class="num">{{ $machineType->pivot->qty_per_machine !== null ? \App\Support\Format::qty($machineType->pivot->qty_per_machine) : '—' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="text-gray-500">{{ __('Not on any parts list.') }}</td></tr>
+                                <tr><td colspan="4" class="text-gray-500">{{ __('Not on any parts list.') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>

@@ -18,11 +18,11 @@ class MachineTypeController extends Controller
     {
         Gate::authorize('viewAny', MachineType::class);
 
-        $query = MachineType::query()->withCount(['partsList', 'workCenters'])->orderBy('code');
+        $query = MachineType::query()->withCount(['partsList', 'machines'])->orderBy('code');
 
         if (CsvExport::requested($request)) {
-            return CsvExport::download('machine-types', ['Code', 'Name', 'Parts', 'Work centres', 'Active'],
-                $query->lazy()->map(fn (MachineType $t) => [$t->code, $t->name, $t->parts_list_count, $t->work_centers_count, $t->is_active]));
+            return CsvExport::download('machine-types', ['Code', 'Name', 'Last serial', 'Parts', 'Machines', 'Active'],
+                $query->lazy()->map(fn (MachineType $t) => [$t->code, $t->name, $t->last_serial, $t->parts_list_count, $t->machines_count, $t->is_active]));
         }
 
         return response()->view('machine-types.index', ['machineTypes' => $query->get()]);
@@ -36,18 +36,20 @@ class MachineTypeController extends Controller
             ->with('item')
             ->join('items', 'items.id', '=', 'machine_type_items.item_id')
             ->orderBy('items.sku')
+            ->orderByRaw('machine_type_items.revision is not null, machine_type_items.revision')
             ->select('machine_type_items.*')
             ->get();
 
         if (CsvExport::requested($request)) {
             return CsvExport::download('parts-list-'.strtolower($machineType->code), [...PartsListImporter::COLUMNS, 'name', 'uom'],
-                $partsList->map(fn ($line) => [$line->item->sku, $line->reference, $line->qty_per_machine,
+                $partsList->map(fn ($line) => [$line->item->sku, $line->revision, $line->reference, $line->qty_per_machine,
                     $line->is_consumable ? 'yes' : '', $line->note, $line->item->name, $line->item->uom]));
         }
 
         return response()->view('machine-types.show', [
-            'machineType' => $machineType->load(['workCenters' => fn ($q) => $q->with('site')->orderBy('code')]),
+            'machineType' => $machineType->load(['machines' => fn ($q) => $q->with('site')->orderBy('sku')]),
             'partsList' => $partsList,
+            'revisions' => $machineType->knownRevisions(),
         ]);
     }
 

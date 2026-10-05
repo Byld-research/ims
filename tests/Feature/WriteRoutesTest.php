@@ -2,11 +2,11 @@
 
 use App\Models\Category;
 use App\Models\Item;
+use App\Models\Machine;
 use App\Models\MachineTypeItem;
 use App\Models\Site;
 use App\Models\SupplierItem;
 use App\Models\User;
-use App\Models\WorkCenter;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
 
@@ -32,7 +32,7 @@ test('an operator is refused on every write route', function () {
         'supplierItem' => $supplierItem->id,
         'machineType' => $machineTypeItem->machine_type_id,
         'machineTypeItem' => $machineTypeItem->id,
-        'workCenter' => WorkCenter::factory()->create(['site_id' => $site->id])->id,
+        'machine' => Machine::factory()->create(['site_id' => $site->id])->id,
     ];
 
     $writeRoutes = collect(Route::getRoutes()->getRoutes())

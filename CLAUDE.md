@@ -7,10 +7,14 @@
 Laravel 13, PHP 8.2+, MariaDB (InnoDB, utf8mb4_unicode_ci), Breeze Blade, Tailwind, Alpine, Pest.
 
 - App database `ims`, test database `ims_test`, user `ims` / `ims` on 127.0.0.1 (Homebrew MariaDB: `brew services start mariadb`).
-- `php artisan migrate:fresh --seed` — sites, reason codes, categories, plus dev users from `SEED_*` env vars (`admin@bpc.test`, `manager.bpc001@bpc.test`, `manager.bpc002@bpc.test`).
-- `php artisan db:seed --class=DemoDataSeeder` — demo catalogue: 20 items, 5 suppliers, 3 machine types, 9 work centres.
+- `php artisan migrate:fresh --seed` — sites, reason codes, categories, the real machine register (8 types, 10 US machines), plus dev users from `SEED_*` env vars (`admin@bpc.test`, `manager.bpc001@bpc.test`, `manager.bpc002@bpc.test`).
+- `php artisan db:seed --class=DemoDataSeeder` — demo catalogue: 22 items, 5 suppliers, parts lists for types C, A and W.
 - `php artisan test` — the suite runs against MariaDB, not SQLite: triggers, CHECK constraints and row locking are part of what is tested.
 - `./vendor/bin/pint` before committing.
+
+## Terminology
+
+Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) and holds the parts list. *Machine* is one physical unit with a SKU like `004C`, a revision and a current site. Stock is issued to machines (`ISSUE_MACHINE`, `machine_id`). There is no "work centre". Type C (003C rev 1.0 at BPC002, 004C rev 2.0 at BPC001) is the reference case for tests and demo data.
 
 ## Rules that are easy to break
 
@@ -31,7 +35,7 @@ Laravel 13, PHP 8.2+, MariaDB (InnoDB, utf8mb4_unicode_ci), Breeze Blade, Tailwi
 ## Build progress (SPEC 12)
 
 - [x] Stage 1: schema, enums, models, auth, roles, policies, site selector, layout
-- [x] Stage 2: categories, items, suppliers, supplier items, machine types, parts lists (CSV import), work centres, stock list
+- [x] Stage 2: categories, items, suppliers, supplier items, machine types, parts lists (CSV import, per revision), machine register, stock list
 - [ ] Stage 3: StockService, adjustments, stock list, item detail, bulk level editor
 - [ ] Stage 4: purchase orders, transitions, receiving
 - [ ] Stage 5: issues and transfers

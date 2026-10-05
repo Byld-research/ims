@@ -16,7 +16,7 @@ return [
     ['route' => 'kanban.index', 'label' => 'Kanban'],
     ['route' => 'purchase-orders.index', 'label' => 'Purchase orders'],
     ['route' => 'stock-counts.index', 'label' => 'Counts', 'can' => 'viewAny', 'model' => StockCount::class],
-    ['route' => 'work-centers.index', 'label' => 'Work centres'],
+    ['route' => 'machines.index', 'label' => 'Machines'],
     ['route' => 'machine-types.index', 'label' => 'Machine types', 'can' => 'viewAny', 'model' => MachineType::class],
     ['route' => 'suppliers.index', 'label' => 'Suppliers', 'can' => 'viewAny', 'model' => Supplier::class],
     ['route' => 'admin.users.index', 'label' => 'Admin', 'can' => 'viewAny', 'model' => User::class],

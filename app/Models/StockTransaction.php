@@ -59,9 +59,9 @@ class StockTransaction extends Model
         return $this->belongsTo(Site::class, 'counter_site_id');
     }
 
-    public function workCenter(): BelongsTo
+    public function machine(): BelongsTo
     {
-        return $this->belongsTo(WorkCenter::class);
+        return $this->belongsTo(Machine::class);
     }
 
     public function purchaseOrderLine(): BelongsTo

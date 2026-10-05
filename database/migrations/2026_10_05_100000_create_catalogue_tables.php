@@ -11,23 +11,26 @@ return new class extends Migration
     {
         Schema::create('machine_types', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 30)->unique();
+            $table->char('code', 1)->unique();
             $table->string('name', 150);
             $table->text('description')->nullable();
+            // Highest serial issued, including machines outside the register (SPEC 5.8).
+            $table->unsignedSmallInteger('last_serial')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
-        Schema::create('work_centers', function (Blueprint $table) {
+        Schema::create('machines', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('site_id')->constrained('sites');
-            $table->foreignId('machine_type_id')->nullable()->constrained('machine_types');
-            $table->string('code', 30);
+            $table->string('sku', 10)->unique();
+            $table->foreignId('machine_type_id')->constrained('machine_types');
             $table->string('name', 150);
+            $table->string('revision', 10);
+            $table->foreignId('site_id')->constrained('sites');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['site_id', 'code']);
+            $table->index(['site_id', 'is_active']);
         });
 
         Schema::create('categories', function (Blueprint $table) {
@@ -62,13 +65,15 @@ return new class extends Migration
             $table->id();
             $table->foreignId('machine_type_id')->constrained('machine_types');
             $table->foreignId('item_id')->constrained('items');
+            // Null: the line applies to every revision of the type.
+            $table->string('revision', 10)->nullable();
             $table->string('reference', 80)->nullable();
             $table->decimal('qty_per_machine', 14, 3)->nullable();
             $table->boolean('is_consumable')->default(false);
             $table->string('note', 255)->nullable();
             $table->timestamps();
 
-            $table->unique(['machine_type_id', 'item_id']);
+            $table->unique(['machine_type_id', 'item_id', 'revision']);
         });
     }
 
@@ -77,7 +82,7 @@ return new class extends Migration
         Schema::dropIfExists('machine_type_items');
         Schema::dropIfExists('items');
         Schema::dropIfExists('categories');
-        Schema::dropIfExists('work_centers');
+        Schema::dropIfExists('machines');
         Schema::dropIfExists('machine_types');
     }
 };

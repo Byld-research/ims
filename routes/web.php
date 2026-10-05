@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItemSearchController;
+use App\Http\Controllers\MachineController;
 use App\Http\Controllers\MachineTypeController;
 use App\Http\Controllers\MachineTypeItemController;
 use App\Http\Controllers\ProfileController;
@@ -11,7 +12,6 @@ use App\Http\Controllers\SiteSelectionController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierItemController;
-use App\Http\Controllers\WorkCenterController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
@@ -41,8 +41,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/machine-type-items/{machineTypeItem}', [MachineTypeItemController::class, 'update'])->name('machine-type-items.update');
     Route::delete('/machine-type-items/{machineTypeItem}', [MachineTypeItemController::class, 'destroy'])->name('machine-type-items.destroy');
 
-    // Work centres
-    Route::resource('work-centers', WorkCenterController::class)->except('destroy')->parameters(['work-centers' => 'workCenter']);
+    // Machine register
+    Route::resource('machines', MachineController::class)->except('destroy');
 });
 
 require __DIR__.'/auth.php';

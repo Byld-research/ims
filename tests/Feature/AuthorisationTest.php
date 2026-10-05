@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Item;
+use App\Models\Machine;
 use App\Models\MachineType;
 use App\Models\PurchaseOrder;
 use App\Models\ReasonCode;
@@ -10,7 +11,6 @@ use App\Models\Stock;
 use App\Models\StockCount;
 use App\Models\Supplier;
 use App\Models\User;
-use App\Models\WorkCenter;
 use Illuminate\Support\Facades\Gate;
 
 /*
@@ -34,13 +34,13 @@ function allows(string $role, string $ability, mixed $arguments): bool
     return Gate::forUser(test()->users[$role])->allows($ability, $arguments);
 }
 
-test('everyone can view stock, items, orders and work centres at every site', function (string $role) {
+test('everyone can view stock, items, orders and machines at every site', function (string $role) {
     $order = new PurchaseOrder(['site_id' => test()->other->id]);
 
     expect(allows($role, 'viewAny', Stock::class))->toBeTrue()
         ->and(allows($role, 'viewAny', Item::class))->toBeTrue()
         ->and(allows($role, 'view', $order))->toBeTrue()
-        ->and(allows($role, 'viewAny', WorkCenter::class))->toBeTrue();
+        ->and(allows($role, 'viewAny', Machine::class))->toBeTrue();
 })->with(['admin', 'manager', 'operator']);
 
 test('items and categories: admin and manager edit, operator does not', function (string $role, bool $expected) {
@@ -110,8 +110,9 @@ test('suppliers and machine types: admin and manager', function (string $role, b
     ['operator', false],
 ]);
 
-test('work centres, users, reason codes and sites: admin only', function (string $role, bool $expected) {
-    expect(allows($role, 'create', WorkCenter::class))->toBe($expected)
+test('machines, users, reason codes and sites: admin only', function (string $role, bool $expected) {
+    expect(allows($role, 'create', Machine::class))->toBe($expected)
+        ->and(allows($role, 'update', new Machine))->toBe($expected)
         ->and(allows($role, 'viewAny', User::class))->toBe($expected)
         ->and(allows($role, 'create', ReasonCode::class))->toBe($expected)
         ->and(allows($role, 'update', test()->own))->toBe($expected);

@@ -24,6 +24,8 @@ The application manages spare parts, consumables and materials used to keep mach
 
 The schema must support adding more sites without modification.
 
+Machines that are currently located outside these two sites, in Poland, are not registered in the application. A machine enters the register when it is installed at a US site.
+
 **The replenishment process the application supports**
 
 1. An operator notices a shortage and tells the site manager. *(Happens outside the application.)*
@@ -35,6 +37,39 @@ The schema must support adding more sites without modification.
 7. The supplier ships and provides a tracking reference.
 8. The manager receives the goods and stock is updated.
 9. Payment is settled elsewhere; the order is marked closed.
+
+---
+
+## 1a. Terminology
+
+These terms are used with exactly one meaning throughout the specification, the code and the interface. The interface is in English; the Polish term is given for the team's convenience.
+
+| Term (UI and code) | Polish | Meaning | Example |
+|---|---|---|---|
+| Site (`site`) | zakład | A US manufacturing location where stock is held and machines are installed. | BPC001 Colorado |
+| Item (`item`) | pozycja katalogowa | A catalogue entry for a spare part, wear part, consumable or tool. Global, shared by both sites. | SP-10001 Saw blade |
+| Item SKU (`items.sku`) | SKU pozycji | The unique catalogue number of an item. | SP-10001 |
+| Machine type (`machine_type`) | typ maszyny | A family of machines, identified by a single letter. Holds the parts list. | C · Truss Saw |
+| Machine (`machine`) | maszyna | One physical machine installed at a site. Stock is issued to machines. | 004C |
+| Machine SKU (`machines.sku`) | SKU maszyny | Three-digit serial number followed by the type letter. Unique across all machines ever built, including those not in the register. | 004C |
+| Revision (`revision`) | rewizja | The design version of a machine, in the form `major.minor`. | 2.0 |
+| Machine name (`machines.name`) | nazwa własna | The machine's proper name. It may differ between revisions and variants of the same type. Displayed with the revision appended. | Truss Saw 2.0 |
+| Parts list (`machine_type_items`) | lista części | The items used on a machine type. A line applies to every revision of the type unless it is limited to one. | |
+
+**Machine types**
+
+| Letter | Type name |
+|---|---|
+| A | Wall Machine 6" |
+| B | Strapping & Header Machine |
+| S | Strapping Machine |
+| H | Header Machine |
+| C | Truss Saw |
+| D | Wall Machine 3.5" |
+| W | Wall JIG |
+| T | Truss JIG |
+
+The term *work centre* used in earlier documents is retired. Consumption is recorded against a machine. Consumption that belongs to no machine, such as general workshop or building maintenance, is a general issue with a reason code.
 
 ---
 
@@ -70,7 +105,7 @@ The schema must support adding more sites without modification.
 Read this section before writing any code. These are deliberate decisions, not oversights.
 
 1. **The item catalogue is global, stock is per site.** One SKU exists once and has a stock row per site.
-2. **No batch or serial number tracking.** Traceability is at transaction level: who moved what, when, where, and for which work centre.
+2. **No batch or serial number tracking.** Traceability is at transaction level: who moved what, when, where, and for which machine.
 3. **Moving average cost, held per item per site.** Each site carries its own cost basis.
 4. **Freight and duty are excluded from cost.** Only the supplier's net price enters the average. Inventory value will therefore read below the true cost of acquisition. This is accepted.
 5. **Single currency: USD.** No exchange rates anywhere.
@@ -88,9 +123,9 @@ Read this section before writing any code. These are deliberate decisions, not o
 
 ```mermaid
 erDiagram
-    SITE ||--o{ WORK_CENTER : "contains"
+    SITE ||--o{ MACHINE : "currently houses"
     SITE ||--o{ STOCK : "holds"
-    MACHINE_TYPE ||--o{ WORK_CENTER : "typed as"
+    MACHINE_TYPE ||--o{ MACHINE : "typed as"
     MACHINE_TYPE ||--o{ MACHINE_TYPE_ITEM : "has parts list"
     ITEM ||--o{ MACHINE_TYPE_ITEM : "listed in"
     ITEM ||--o{ STOCK : "stocked as"
@@ -104,7 +139,7 @@ erDiagram
     ITEM ||--o{ PURCHASE_ORDER_LINE : "ordered as"
     ITEM ||--o{ STOCK_TRANSACTION : "moved in"
     SITE ||--o{ STOCK_TRANSACTION : "located at"
-    WORK_CENTER ||--o{ STOCK_TRANSACTION : "consumes"
+    MACHINE ||--o{ STOCK_TRANSACTION : "consumes"
     REASON_CODE ||--o{ STOCK_TRANSACTION : "classifies"
     USER ||--o{ STOCK_TRANSACTION : "performed by"
     STOCK_COUNT ||--o{ STOCK_COUNT_LINE : "contains"
@@ -126,32 +161,34 @@ erDiagram
 
 ### 4.2 machine_types
 
-Holds the parts list once per machine type, so the same list is not duplicated across identical machines at both sites.
+A family of machines. Holds the parts list once per type, so it is not duplicated across machines of the same type at both sites.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| code | varchar(30) unique | TRUSS_SAW |
+| code | char(1) unique | one capital letter: A, B, C, D, H, S, T, W |
 | name | varchar(150) | Truss Saw |
 | description | text nullable | |
+| last_serial | smallint unsigned default 0 | highest serial number issued for this type, including machines outside the register |
 | is_active | boolean default true | |
 | timestamps | | |
 
-### 4.3 work_centers
+### 4.3 machines
 
-A work centre is a production cell, in practice a named machine at a site.
+One physical machine installed at a site.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| site_id | FK sites | |
-| machine_type_id | FK machine_types nullable | gives it a parts list |
-| code | varchar(30) | 004C |
-| name | varchar(150) | Truss Saw 004C |
+| sku | varchar(10) unique | serial and type letter, e.g. 004C; immutable once the machine has transactions |
+| machine_type_id | FK machine_types | must match the letter in the SKU |
+| name | varchar(150) | proper name, e.g. Wall Machine 6" Standard no HD punch; defaults to the type name |
+| revision | varchar(10) | `major.minor`, e.g. 2.0 |
+| site_id | FK sites | current location; may change when the machine is relocated |
 | is_active | boolean default true | |
 | timestamps | | |
 
-Unique on `(site_id, code)`.
+The display name is `name` followed by `revision`: *Truss Saw 2.0*.
 
 ### 4.4 categories
 
@@ -210,12 +247,13 @@ The parts list for a machine type.
 | id | bigint PK | |
 | machine_type_id | FK machine_types | |
 | item_id | FK items | |
+| revision | varchar(10) nullable | null: the line applies to every revision; otherwise only to that revision |
 | reference | varchar(80) nullable | position or drawing reference |
 | qty_per_machine | decimal(14,3) nullable | informational |
 | is_consumable | boolean default false | wears out rather than being fitted |
 | note | varchar(255) nullable | |
 
-Unique on `(machine_type_id, item_id)`.
+Unique on `(machine_type_id, item_id, revision)`. An item is listed on a type either once for all revisions, or once per specific revision, never both: see 5.8.
 
 ### 4.8 suppliers
 
@@ -283,7 +321,7 @@ The ledger. Append only: no updates, no deletes, ever.
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| type | enum | RECEIPT, ISSUE_WORK_CENTER, ISSUE_GENERAL, TRANSFER_OUT, TRANSFER_IN, ADJUSTMENT |
+| type | enum | RECEIPT, ISSUE_MACHINE, ISSUE_GENERAL, TRANSFER_OUT, TRANSFER_IN, ADJUSTMENT |
 | item_id | FK items | |
 | site_id | FK sites | the site whose stock changes |
 | qty_delta | decimal(14,3) | signed: positive in, negative out |
@@ -291,7 +329,7 @@ The ledger. Append only: no updates, no deletes, ever.
 | value | decimal(14,4) | qty_delta × unit_cost, signed |
 | qty_after | decimal(14,3) | stock at this site after the movement |
 | avg_cost_after | decimal(14,4) | |
-| work_center_id | FK work_centers nullable | required for ISSUE_WORK_CENTER |
+| machine_id | FK machines nullable | required for ISSUE_MACHINE; the machine must be at `site_id` at the time of the issue |
 | counter_site_id | FK sites nullable | required for TRANSFER_OUT and TRANSFER_IN |
 | purchase_order_line_id | FK nullable | required for RECEIPT |
 | stock_count_id | FK nullable | set when the adjustment came from a count |
@@ -301,7 +339,7 @@ The ledger. Append only: no updates, no deletes, ever.
 | user_id | FK users | |
 | created_at | timestamp | no updated_at |
 
-Indexes on `(item_id, site_id, created_at)`, `(work_center_id, created_at)`, `(type, created_at)`.
+Indexes on `(item_id, site_id, created_at)`, `(machine_id, created_at)`, `(type, created_at)`.
 
 ### 4.13 reason_codes
 
@@ -366,7 +404,7 @@ Master data changes only. Stock movements live in `stock_transactions`.
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| entity | varchar(40) | item, supplier, user, stock, machine_type |
+| entity | varchar(40) | item, supplier, user, stock, machine_type, machine |
 | entity_id | bigint | |
 | action | enum CREATE, UPDATE, DELETE | |
 | changes | json | changed fields only, before and after |
@@ -392,7 +430,7 @@ new_avg = (qty * avg_cost + incoming_qty * incoming_unit_cost) / new_qty
 
 If `qty` is zero, or the stock row is being created, `new_avg = incoming_unit_cost`.
 
-**Outgoing movement** (ISSUE_WORK_CENTER, ISSUE_GENERAL, TRANSFER_OUT, negative ADJUSTMENT):
+**Outgoing movement** (ISSUE_MACHINE, ISSUE_GENERAL, TRANSFER_OUT, negative ADJUSTMENT):
 
 ```
 unit_cost = current avg_cost
@@ -411,7 +449,7 @@ Store four decimal places. Round only for display, never in storage.
 | Type | Direction | Mandatory fields |
 |---|---|---|
 | RECEIPT | in | purchase_order_line_id; `unit_cost` is the line's `unit_price` |
-| ISSUE_WORK_CENTER | out | work_center_id |
+| ISSUE_MACHINE | out | machine_id |
 | ISSUE_GENERAL | out | reason_code_id |
 | TRANSFER_OUT | out | counter_site_id, transfer_group |
 | TRANSFER_IN | in | counter_site_id, transfer_group |
@@ -511,12 +549,25 @@ In the application this means only:
 
 Stock is still recorded in the item's unit of measure, not in bins. The application does not model individual bins, print cards, or track which bin is in use.
 
-### 5.8 Machine parts lists
+### 5.8 Machines and parts lists
 
-- A parts list belongs to a machine type, not to an individual work centre, so identical machines at both sites share one list.
-- A work centre with no machine type simply has no parts list; this is valid.
-- The work centre screen shows the parts list with current stock at that work centre's site next to each line, so a technician can see what is available before starting work.
-- The parts list is informational. It does not reserve stock, drive ordering, or restrict which items may be issued to a work centre.
+**Machine register**
+
+- Only machines installed at a US site are registered. Every machine has a type, a revision and a current site.
+- A machine's SKU is a three-digit serial number followed by its type letter: `004C`. Serial numbers run per type and are never reused.
+- When a machine is registered, the form proposes the next serial: one more than the higher of `machine_types.last_serial` and the highest serial already in the register for that type. The administrator may overwrite it to register an existing machine under its known number. Saving raises `last_serial` when the serial used is higher.
+- The SKU must match the pattern `^\d{3}[A-Z]$`, and its letter must equal the machine type's code.
+- A machine may be relocated to another site by changing its `site_id`. Its consumption history is unaffected, because every transaction stores the site where it happened. Stock can be issued to a machine only at the site where the machine currently is.
+- Machines are deactivated, never deleted. An inactive machine is not offered on the issue form.
+
+**Parts lists**
+
+- A parts list belongs to a machine type, not to an individual machine, so machines of the same type share one list.
+- A line with no revision applies to every revision of the type. A line with a revision applies only to machines of that revision. Use this when a part differs between revisions.
+- An item appears on a type's list either once with no revision, or once per specific revision. Mixing the two for the same item is rejected, so a machine never sees the same item twice.
+- The machine screen shows the lines that apply to its revision, with current stock at the machine's site next to each line, so a technician can see what is available before starting work.
+- The parts list is informational. It does not reserve stock, drive ordering, or restrict which items may be issued to a machine.
+- A parts list can be imported from CSV with the columns `sku, revision, reference, qty_per_machine, is_consumable, note`. Lines are matched by item and revision. The import is all-or-nothing: one invalid line rejects the whole file.
 
 ### 5.9 Email notifications
 
@@ -532,23 +583,23 @@ The digest is skipped entirely when there is nothing to report. No per-event ema
 
 | Action | ADMIN | MANAGER | OPERATOR |
 |---|---|---|---|
-| View stock, items, orders, work centres | all sites | own site, read-only on the other | own site, read-only on the other |
+| View stock, items, orders, machines | all sites | own site, read-only on the other | own site, read-only on the other |
 | Create and edit items and categories | yes | yes | no |
 | Set minimum levels, bins, kanban settings | yes | own site | no |
 | Create, send and manage purchase orders | yes | own site | no |
 | Receive goods | yes | own site | no |
-| Issue stock to a work centre or generally | yes | own site | no |
+| Issue stock to a machine or generally | yes | own site | no |
 | Transfer between sites | yes | as the receiving site | no |
 | Adjustments | yes | own site | no |
 | Create and post stock counts | yes | own site | no |
 | Manage suppliers and supplier items | yes | yes | no |
 | Manage machine types and parts lists | yes | yes | no |
-| Manage work centres | yes | no | no |
+| Register, edit and relocate machines | yes | no | no |
 | Manage users, roles, reason codes | yes | no | no |
 
 Cross-site read access is deliberate: step 3 of the process requires a manager to see the other site's stock before ordering.
 
-Implement as policies: `ItemPolicy`, `StockPolicy`, `PurchaseOrderPolicy`, `StockCountPolicy`, `WorkCenterPolicy`, `UserPolicy`. A manager's write access is granted only when the target record's `site_id` matches their own.
+Implement as policies: `ItemPolicy`, `StockPolicy`, `PurchaseOrderPolicy`, `StockCountPolicy`, `MachinePolicy`, `UserPolicy`. A manager's write access is granted only when the target record's `site_id` matches their own.
 
 Role is a single enum field on the user. Granting operators the right to issue stock later must require no schema change.
 
@@ -569,19 +620,19 @@ A site selector sits in the header. It defaults to the user's own site, is switc
 | 7 | `/purchase-orders` | Order list filtered by status and supplier | all; operators read-only |
 | 8 | `/purchase-orders/{po}` | Order detail: lines, status transitions, ETA, tracking, receive action | all; actions manager, admin |
 | 9 | `/purchase-orders/{po}/receive` | Receive goods: one row per open line, quantity defaulting to the outstanding amount | manager, admin |
-| 10 | `/issues/create` | Issue stock: two modes — work centre, general | manager, admin |
+| 10 | `/issues/create` | Issue stock: two modes — to a machine, general | manager, admin |
 | 10a | `/transfers/create` | Transfer in from another site, entered by the receiving manager on arrival | manager, admin |
 | 11 | `/adjustments/create` | Adjustment with reason code | manager, admin |
 | 12 | `/stock-counts`, `/stock-counts/{count}` | Count list, count sheet, posting | manager, admin |
 | 13 | `/kanban` | Kanban view for the selected site | all |
-| 14 | `/work-centers`, `/work-centers/{wc}` | Work centre list and detail with parts list and consumption history | all; editing manager, admin |
+| 14 | `/machines`, `/machines/{machine}` | Machine register for the selected site; machine detail with the parts list for its revision, stock at its site, and consumption history | all; editing admin |
 | 15 | `/machine-types`, `/machine-types/{type}` | Machine types and their parts lists | manager, admin |
 | 16 | `/suppliers`, `/suppliers/{supplier}` | Suppliers and supplier items | manager, admin |
 | 17 | `/admin/users`, `/admin/reason-codes`, `/admin/sites` | Administration | admin |
 
 **Interface principles**
 
-1. The issue form must be completable in three interactions: pick the item, pick the destination, enter the quantity. Everything else is defaulted or hidden.
+1. The issue form must be completable in three interactions: pick the item, pick the machine (or a general reason), enter the quantity. Everything else is defaulted or hidden.
 2. Every list view has a CSV export. This is the escape valve for every report nobody specified.
 3. Nothing is deleted. Records are deactivated; stock errors are compensated.
 4. Every form that changes stock shows the resulting quantity before submission.
@@ -607,10 +658,10 @@ Scoped to the selected site; administrators may switch to a consolidated view.
 - total inventory value at the site and by category
 - count of items below minimum against items with a minimum set
 - consumption value for the current month against the previous month
-- top ten work centres by consumption value over the last 90 days
+- top ten machines by consumption value over the last 90 days
 - items with no movement in the last 12 months
 
-The work centre figures are the reason every issue records both quantity and cost. They are what will eventually correct the minimum levels, which have to be set from guesswork because no consumption history exists yet.
+The machine figures are the reason every issue records both quantity and cost. They are what will eventually correct the minimum levels, which have to be set from guesswork because no consumption history exists yet.
 
 ---
 
@@ -643,9 +694,30 @@ Seeders must be provided and must be idempotent.
 - Tools: Power Tools, Hand Tools, Measuring & Gauges
 - Machines: Production Machines
 
+**Machine types** — the eight types listed in 1a, with `last_serial` set to the highest serial issued so far: A 7, B 6, C 6, D 1, W 9, and 0 for H, S and T.
+
+**Machines** — the machines installed at US sites as of October 2026:
+
+| SKU | Name | Revision | Site |
+|---|---|---|---|
+| 003C | Truss Saw | 1.0 | BPC002 |
+| 004C | Truss Saw | 2.0 | BPC001 |
+| 003A | Wall Machine 6" Standard no HD punch | 1.0 | BPC001 |
+| 004A | Wall Machine 6" Standard no HD punch | 1.0 | BPC002 |
+| 005A | Wall Machine 6" Standard no HD punch | 1.0 | BPC002 |
+| 004B | Header & Strapping Machine | 1.0 | BPC002 |
+| 006W | Wall JIG | 1.0 | BPC002 |
+| 007W | Wall JIG | 1.0 | BPC002 |
+| 008W | Wall JIG | 1.0 | BPC001 |
+| 009W | Wall JIG | 1.0 | BPC001 |
+
+Machines 005C, 006C (Truss Saw 2.0), 006A, 007A (Wall Machine 6"), 001D (Wall Machine 3 5/8" Standard), 005B and 006B (Header & Strapping Machine) are in Poland and are not registered; their serials are reserved through `last_serial`.
+
+Type C, the Truss Saw, is the reference case for the parts list, demo data and acceptance tests: machine 003C (revision 1.0, Georgia) and 004C (revision 2.0, Colorado).
+
 **Users** — one administrator plus one manager per site, for development only, with passwords set from environment variables.
 
-**Demo data** — a separate seeder, never run in production: a few machine types with parts lists, a handful of suppliers and items, and sample transactions.
+**Demo data** — a separate seeder, never run in production: a Truss Saw parts list with lines common to both revisions and lines specific to 1.0 or 2.0, a handful of suppliers and items, and sample transactions.
 
 ---
 
@@ -656,8 +728,8 @@ These are configuration, not code. Build the application so they can be entered 
 | Item | Status |
 |---|---|
 | SKU numbering pattern and its validation regex | to be supplied; until then accept any non-empty string up to 40 characters |
-| Work centre list for both sites | to be supplied |
-| Machine types and their parts lists | to be supplied; import from spreadsheet |
+| Machine types and machine register | supplied; see section 9 |
+| Parts lists per machine type | to be supplied; import from spreadsheet, starting with type C |
 | Initial minimum levels | to be supplied; derive from the suggested quantity column of the existing spare parts spreadsheets |
 | Opening stock quantities and costs | from the opening stock count, entered as ADJUSTMENT with reason OPENING |
 | Daily digest hour per site | `sites.digest_hour`, editable under `/admin/sites`, default 7 (07:00 local) |
@@ -678,6 +750,7 @@ Do not build any of this, even if it seems natural:
 - multiple currencies, exchange rates
 - in-transit stock, shipment status beyond the fields defined here, customs status
 - location hierarchies, zones, bin management beyond the free-text field
+- machines located outside the US sites, and stock held outside them
 - supplier portals, external access of any kind
 - reorder point calculations, forecasting, automatic order generation
 - a REST API or mobile application
@@ -691,10 +764,10 @@ Each stage must leave the application working and tested.
 | Stage | Contents |
 |---|---|
 | 1 | Schema and migrations, enums, models, Breeze auth, roles, policies, site selector, layout |
-| 2 | Categories, items, suppliers, supplier items, machine types, parts lists, work centres |
+| 2 | Categories, items, suppliers, supplier items, machine types, parts lists, machine register |
 | 3 | `StockService`, adjustments, stock list, item detail, bulk level editor — the application becomes usable here and the opening stock count can start |
 | 4 | Purchase orders, status transitions, receiving with partial receipts |
-| 5 | Issues: work centre, general, transfer between sites |
+| 5 | Issues: to a machine, general; transfer between sites |
 | 6 | Stock counts: creation, counting, posting |
 | 7 | Dashboard, kanban view, CSV exports |
 | 8 | Daily digest email, audit log, hardening |
@@ -753,6 +826,14 @@ Each of these must be covered by an automated test.
 27. An OPENING adjustment sets `last_counted_at`.
 28. An order in CONFIRMED status can be received in full and moves straight to RECEIVED.
 
+**Added in revision 1.2 — machines, with type C as the reference case**
+
+29. Registering a new Truss Saw proposes SKU 007C, because `last_serial` for type C is 6 even though only 003C and 004C are registered.
+30. A machine SKU whose letter does not match its type, such as 007A for a Truss Saw, is rejected; so is a duplicate SKU.
+31. A parts list line with no revision appears for both 003C (1.0) and 004C (2.0); a line limited to 2.0 appears for 004C only.
+32. Adding a revision-specific line for an item that already has an all-revisions line on the same type is rejected, and vice versa.
+33. Stock can be issued to 004C only at BPC001. After 004C is relocated to BPC002, issues go through BPC002, and earlier transactions still show BPC001.
+
 ---
 
 ## Change history
@@ -760,4 +841,5 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.2 | 2026-10-05 | Terminology section; *work centre* replaced by *machine* throughout; machine types identified by letter with `last_serial`; machine register with SKU, name, revision and current site, relocatable; parts list lines optionally limited to a revision; machines in Poland excluded; machine register seeded; type C as the reference case; criteria 29–33 |
 | 1.1 | 2026-10-05 | Half-up rounding rule; receipt cost from line price; transfer moved to a dedicated incoming form with explicit policy exception and rejection guidance; missing receive transitions from ORDERED and CONFIRMED; pack size informational only; uncounted lines skipped at posting; OPENING sets `last_counted_at`; operators read purchase orders; `sites.digest_hour` |

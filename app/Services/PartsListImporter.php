@@ -3,19 +3,22 @@
 namespace App\Services;
 
 use App\Models\Item;
+use App\Models\Machine;
 use App\Models\MachineType;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Imports a machine type's parts list from CSV (SPEC 10: "import from spreadsheet").
  *
- * Columns, header row required: sku (required), reference, qty_per_machine, is_consumable, note.
- * Rows are matched to the catalogue by SKU and upserted by item. The import is all-or-nothing:
- * any invalid row rejects the whole file, so a half-imported list never exists.
+ * Columns, header row required: sku (required), revision, reference, qty_per_machine, is_consumable, note.
+ * An empty revision means the line applies to every revision of the type (SPEC 5.8).
+ * Rows are matched to the catalogue by SKU and upserted by item and revision. The import is
+ * all-or-nothing: any invalid row rejects the whole file, so a half-imported list never exists.
  */
 class PartsListImporter
 {
-    public const COLUMNS = ['sku', 'reference', 'qty_per_machine', 'is_consumable', 'note'];
+    public const COLUMNS = ['sku', 'revision', 'reference', 'qty_per_machine', 'is_consumable', 'note'];
 
     /** @var list<string> */
     private array $errors = [];
@@ -28,6 +31,10 @@ class PartsListImporter
         $this->errors = [];
         $rows = $this->parse($path);
 
+        if (! $this->errors) {
+            $this->checkAgainstExistingList($machineType, $rows);
+        }
+
         if ($this->errors) {
             return null;
         }
@@ -36,7 +43,10 @@ class PartsListImporter
             $created = $updated = 0;
 
             foreach ($rows as $row) {
-                $line = $machineType->partsList()->updateOrCreate(['item_id' => $row['item_id']], $row);
+                $line = $machineType->partsList()->updateOrCreate(
+                    ['item_id' => $row['item_id'], 'revision' => $row['revision']],
+                    Arr::except($row, 'line'),
+                );
                 $line->wasRecentlyCreated ? $created++ : $updated++;
             }
 
@@ -128,13 +138,25 @@ class PartsListImporter
                 continue;
             }
 
-            if (isset($seen[$sku])) {
-                $this->errors[] = __('Line :line: SKU :sku already appears on line :first.', ['line' => $line, 'sku' => $sku, 'first' => $seen[$sku]]);
+            $revision = ($record['revision'] ?? '') ?: null;
+
+            if ($revision !== null && ! preg_match(Machine::REVISION_PATTERN, $revision)) {
+                $this->errors[] = __('Line :line: revision ":revision" must look like 2.0, or be empty for all revisions.', ['line' => $line, 'revision' => $revision]);
 
                 continue;
             }
 
-            $seen[$sku] = $line;
+            $key = $sku.'|'.$revision;
+
+            if (isset($seen[$key])) {
+                $this->errors[] = __('Line :line: SKU :sku :revision already appears on line :first.', [
+                    'line' => $line, 'sku' => $sku, 'revision' => $revision ? __('for revision :r', ['r' => $revision]) : __('for all revisions'), 'first' => $seen[$key],
+                ]);
+
+                continue;
+            }
+
+            $seen[$key] = $line;
             $qty = $record['qty_per_machine'] ?? '';
 
             if ($qty !== '' && ! preg_match('/^\d{1,11}(\.\d{1,3})?$/', $qty)) {
@@ -150,7 +172,9 @@ class PartsListImporter
             }
 
             $rows[] = [
+                'line' => $line,
                 'item_id' => $item->id,
+                'revision' => $revision,
                 'reference' => ($record['reference'] ?? '') ?: null,
                 'qty_per_machine' => $qty !== '' && bccomp($qty, '0', 3) > 0 ? $qty : null,
                 'is_consumable' => in_array(strtolower($record['is_consumable'] ?? ''), ['1', 'yes', 'y', 'true', 'x'], true),
@@ -159,5 +183,35 @@ class PartsListImporter
         }
 
         return $rows;
+    }
+
+    /**
+     * Apply the all-revisions-or-specific rule (SPEC 5.8) to the file and to lines already on the list.
+     * A file line replaces the existing line with the same item and revision, so that one is ignored.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function checkAgainstExistingList(MachineType $machineType, array $rows): void
+    {
+        $existing = $machineType->partsList()->get(['item_id', 'revision'])
+            ->groupBy('item_id')
+            ->map(fn ($lines) => $lines->pluck('revision')->all());
+
+        $byItem = collect($rows)->groupBy('item_id');
+
+        foreach ($byItem as $itemId => $fileRows) {
+            $revisions = collect($existing->get($itemId, []))
+                ->merge($fileRows->pluck('revision'))
+                ->unique(fn ($r) => $r ?? "\0");
+
+            if ($revisions->contains(null) && $revisions->count() > 1) {
+                $first = $fileRows->first();
+                $this->errors[] = __('Line :line: SKU :sku would be listed both for all revisions and for specific revisions (:revisions). Use one or the other.', [
+                    'line' => $first['line'],
+                    'sku' => Item::query()->whereKey($itemId)->value('sku'),
+                    'revisions' => $revisions->filter()->join(', '),
+                ]);
+            }
+        }
     }
 }

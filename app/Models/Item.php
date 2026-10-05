@@ -52,7 +52,7 @@ class Item extends Model
     public function machineTypes(): BelongsToMany
     {
         return $this->belongsToMany(MachineType::class, 'machine_type_items')
-            ->withPivot(['reference', 'qty_per_machine', 'is_consumable', 'note'])
+            ->withPivot(['revision', 'reference', 'qty_per_machine', 'is_consumable', 'note'])
             ->withTimestamps();
     }
 

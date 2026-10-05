@@ -5,14 +5,13 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\MachineType;
-use App\Models\Site;
 use App\Models\Supplier;
-use App\Models\WorkCenter;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Demonstration catalogue for development and training (SPEC 9). Never run in production.
+ * Demonstration catalogue for development and training (SPEC 9), built around type C,
+ * the Truss Saw. Never run in production.
  * Run with: php artisan db:seed --class=DemoDataSeeder
  */
 class DemoDataSeeder extends Seeder
@@ -58,6 +57,8 @@ class DemoDataSeeder extends Seeder
             ['TL-40002', 'Torque wrench 20-100 Nm', 'Hand Tools', 'pc', null, 'Wera', '05075610001', 'McMaster-Carr', '246.0000', 1],
             ['TL-40003', 'Digital caliper 150 mm', 'Measuring & Gauges', 'pc', null, 'Mitutoyo', '500-196-30', 'McMaster-Carr', '128.0000', 1],
             ['SP-10010', 'Conveyor roller 1.9" x 24"', 'Mechanical', 'pc', 'B', 'Hytrol', 'R-19-24', 'Hytrol Parts Direct', '32.7500', 1],
+            ['SP-10011', 'Stepper drive, saw axis (rev 1.0)', 'Electrical', 'pc', 'A', 'Leadshine', 'DM860H', 'Kraków warehouse', '214.0000', 1],
+            ['SP-10012', 'Stepper motor cable 8 m', 'Electrical', 'pc', 'A', 'Leadshine', 'CABLE-M-8', 'Kraków warehouse', '61.0000', 1],
         ];
 
         foreach ($items as [$sku, $name, $categoryName, $uom, $criticality, $manufacturer, $mpn, $supplier, $price, $pack]) {
@@ -81,48 +82,44 @@ class DemoDataSeeder extends Seeder
             );
         }
 
+        // Type C, the Truss Saw, is the reference case (SPEC 9): lines common to both revisions,
+        // plus lines that differ between 003C (1.0) and 004C (2.0).
+        // [sku, revision (null = all), reference, qty per machine, consumable]
         $parts = [
-            'TRUSS_SAW' => ['Truss Saw', [
-                ['SP-10001', 'Main blade', 1, true], ['SP-10002', 'Carriage', 4, false], ['SP-10003', 'Feed drive', 2, false],
-                ['SP-10004', 'Home position', 3, false], ['SP-10005', 'Axis 1', 1, false], ['SP-10009', 'Guarding', 1, false],
-                ['CS-30001', 'Dust extraction', 2, true], ['CS-30003', 'Lubrication points', null, true],
-            ]],
-            'NAIL_PRESS' => ['Nail Plate Press', [
-                ['WP-20001', 'Press head', 2, true], ['WP-20002', 'Die set', 2, true], ['SP-10006', 'Clamp', 2, false],
-                ['SP-10007', 'Clamp valve', 1, false], ['SP-10008', 'Hydraulic unit', 4, false], ['CS-30002', 'Hydraulic unit', 60, true],
-            ]],
-            'CONVEYOR' => ['Roller Conveyor', [
-                ['SP-10010', 'Rollers', 24, false], ['CS-30004', 'Frame', null, true],
-            ]],
+            'C' => [
+                ['SP-10001', null, 'Main blade', 1, true],
+                ['SP-10002', null, 'Carriage', 4, false],
+                ['SP-10003', null, 'Feed drive', 2, false],
+                ['SP-10004', null, 'Home position', 3, false],
+                ['SP-10011', '1.0', 'Axis 1 drive', 1, false],
+                ['SP-10012', '1.0', 'Axis 1', 1, false],
+                ['SP-10005', '2.0', 'Axis 1', 1, false],
+                ['SP-10009', '2.0', 'Guarding', 1, false],
+                ['CS-30001', null, 'Dust extraction', 2, true],
+                ['CS-30003', null, 'Lubrication points', null, true],
+            ],
+            'A' => [
+                ['WP-20001', null, 'Press head', 2, true],
+                ['WP-20002', null, 'Die set', 2, true],
+                ['SP-10006', null, 'Clamp', 2, false],
+                ['SP-10007', null, 'Clamp valve', 1, false],
+                ['SP-10008', null, 'Hydraulic unit', 4, false],
+                ['CS-30002', null, 'Hydraulic unit', 60, true],
+            ],
+            'W' => [
+                ['CS-30004', null, 'Frame', null, true],
+                ['SP-10010', null, 'Infeed rollers', 12, false],
+            ],
         ];
 
-        $machineTypes = [];
-        foreach ($parts as $code => [$name, $lines]) {
-            $machineTypes[$code] = MachineType::query()->firstOrCreate(['code' => $code], ['name' => $name]);
+        foreach ($parts as $code => $lines) {
+            $type = MachineType::query()->where('code', $code)->firstOrFail();
 
-            foreach ($lines as [$sku, $reference, $qty, $consumable]) {
-                $machineTypes[$code]->partsList()->firstOrCreate(
-                    ['item_id' => Item::query()->where('sku', $sku)->value('id')],
+            foreach ($lines as [$sku, $revision, $reference, $qty, $consumable]) {
+                $type->partsList()->firstOrCreate(
+                    ['item_id' => Item::query()->where('sku', $sku)->value('id'), 'revision' => $revision],
                     ['reference' => $reference, 'qty_per_machine' => $qty, 'is_consumable' => $consumable],
                 );
-            }
-        }
-
-        $workCenters = [
-            'BPC001' => [['004C', 'Truss Saw 004C', 'TRUSS_SAW'], ['005C', 'Truss Saw 005C', 'TRUSS_SAW'],
-                ['P01', 'Nail Plate Press 1', 'NAIL_PRESS'], ['CV1', 'Outfeed Conveyor', 'CONVEYOR'], ['MNT', 'Maintenance Shop', null]],
-            'BPC002' => [['004G', 'Truss Saw 004G', 'TRUSS_SAW'], ['P01', 'Nail Plate Press 1', 'NAIL_PRESS'],
-                ['P02', 'Nail Plate Press 2', 'NAIL_PRESS'], ['MNT', 'Maintenance Shop', null]],
-        ];
-
-        foreach ($workCenters as $siteCode => $centers) {
-            $siteId = Site::query()->where('code', $siteCode)->value('id');
-
-            foreach ($centers as [$code, $name, $type]) {
-                WorkCenter::query()->firstOrCreate(['site_id' => $siteId, 'code' => $code], [
-                    'name' => $name,
-                    'machine_type_id' => $type ? $machineTypes[$type]->id : null,
-                ]);
             }
         }
     }

@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :title="$machineType->name" :subtitle="$machineType->code">
+        <x-page-header :title="$machineType->code.' · '.$machineType->name"
+                       :subtitle="__('Last serial :serial · next machine: :next', ['serial' => sprintf('%03d', $machineType->last_serial), 'next' => $machineType->nextSku()])">
             <x-active-badge :active="$machineType->is_active" />
             <x-export-link />
             @can('update', $machineType)
@@ -29,7 +30,7 @@
             <div class="card-body pb-2 flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="card-title">{{ __('Parts list') }} <span class="text-gray-400 font-normal">({{ $partsList->count() }})</span></h3>
-                    <p class="text-sm text-gray-500">{{ __('Informational: it does not reserve stock or restrict what may be issued.') }}</p>
+                    <p class="text-sm text-gray-500">{{ __('Lines without a revision apply to every revision. Informational: nothing is reserved or restricted.') }}</p>
                 </div>
                 @can('update', $machineType)
                     <form method="POST" action="{{ route('machine-types.import', $machineType) }}" enctype="multipart/form-data"
@@ -38,7 +39,7 @@
                         <input type="file" name="file" accept=".csv,text/csv" required class="text-sm file:me-2 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm">
                         <button class="btn-secondary btn-sm">{{ __('Import CSV') }}</button>
                         <span class="w-full text-xs text-gray-500">
-                            {{ __('Columns: :columns. Existing lines are updated by SKU; nothing is removed.', ['columns' => implode(', ', App\Services\PartsListImporter::COLUMNS)]) }}
+                            {{ __('Columns: :columns. An empty revision means all revisions. Existing lines are updated by SKU and revision; nothing is removed.', ['columns' => implode(', ', App\Services\PartsListImporter::COLUMNS)]) }}
                         </span>
                         <x-input-error :messages="$errors->get('file')" />
                     </form>
@@ -49,6 +50,7 @@
                     <thead>
                         <tr>
                             <th>{{ __('Item') }}</th>
+                            <th>{{ __('Revision') }}</th>
                             <th>{{ __('Reference') }}</th>
                             <th class="num">{{ __('Qty / machine') }}</th>
                             <th>{{ __('Type') }}</th>
@@ -64,14 +66,22 @@
                                     <span class="text-gray-700">{{ $line->item->name }}</span>
                                     @unless ($line->item->is_active)<span class="badge-gray ms-1">{{ __('Inactive') }}</span>@endunless
                                 </td>
+                                <td x-show="!editing">
+                                    @if ($line->revision)
+                                        <span class="badge-indigo">{{ $line->revision }}</span>
+                                    @else
+                                        <span class="text-gray-500">{{ __('All') }}</span>
+                                    @endif
+                                </td>
                                 <td x-show="!editing">{{ $line->reference ?? '—' }}</td>
                                 <td class="num" x-show="!editing">{{ $line->qty_per_machine !== null ? \App\Support\Format::qty($line->qty_per_machine).' '.$line->item->uom : '—' }}</td>
                                 <td x-show="!editing">@if ($line->is_consumable)<span class="badge-amber">{{ __('Consumable') }}</span>@endif</td>
                                 <td x-show="!editing" class="text-gray-600">{{ $line->note }}</td>
                                 @can('update', $machineType)
-                                    <td colspan="4" x-show="editing" x-cloak>
+                                    <td colspan="5" x-show="editing" x-cloak>
                                         <form method="POST" action="{{ route('machine-type-items.update', $line) }}" class="flex flex-wrap items-center gap-2">
                                             @csrf @method('PUT')
+                                            <input name="revision" value="{{ $line->revision }}" placeholder="{{ __('All revisions') }}" list="revision-options" maxlength="10" class="form-input w-28 font-mono">
                                             <input name="reference" value="{{ $line->reference }}" placeholder="{{ __('Reference') }}" maxlength="80" class="form-input w-32">
                                             <input name="qty_per_machine" value="{{ $line->qty_per_machine }}" placeholder="{{ __('Qty') }}" inputmode="decimal" class="form-input w-20 text-right">
                                             <label class="inline-flex items-center gap-1.5 text-sm text-gray-700">
@@ -95,7 +105,7 @@
                                 @endcan
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-gray-500">{{ __('The parts list is empty.') }}</td></tr>
+                            <tr><td colspan="7" class="text-gray-500">{{ __('The parts list is empty.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -109,17 +119,22 @@
                             <x-item-picker name="item_id" required />
                         </x-field>
                     </div>
-                    <div class="sm:col-span-2">
+                    <div class="sm:col-span-1">
+                        <x-field name="revision" :label="__('Revision')">
+                            <x-input name="revision" list="revision-options" maxlength="10" class="font-mono" :placeholder="__('All')" />
+                        </x-field>
+                    </div>
+                    <div class="sm:col-span-1">
                         <x-field name="reference" :label="__('Reference')">
                             <x-input name="reference" maxlength="80" />
                         </x-field>
                     </div>
-                    <div class="sm:col-span-2">
+                    <div class="sm:col-span-1">
                         <x-field name="qty_per_machine" :label="__('Qty / machine')">
                             <x-input name="qty_per_machine" inputmode="decimal" class="text-right" />
                         </x-field>
                     </div>
-                    <div class="sm:col-span-3 space-y-2">
+                    <div class="sm:col-span-4 space-y-2">
                         <x-field name="note" :label="__('Note')">
                             <x-input name="note" maxlength="255" />
                         </x-field>
@@ -132,20 +147,31 @@
             @endcan
         </section>
 
+        <datalist id="revision-options">
+            @foreach ($revisions as $revision)
+                <option value="{{ $revision }}">
+            @endforeach
+        </datalist>
+
         <section class="card">
-            <div class="card-body pb-2"><h3 class="card-title">{{ __('Machines of this type') }}</h3></div>
+            <div class="card-body pb-2 flex items-center justify-between">
+                <h3 class="card-title">{{ __('Registered machines') }}</h3>
+                @can('create', App\Models\Machine::class)
+                    <a href="{{ route('machines.create', ['type' => $machineType->id]) }}" class="btn-secondary btn-sm">{{ __('Register :sku', ['sku' => $machineType->nextSku()]) }}</a>
+                @endcan
+            </div>
             <div class="table-wrap">
                 <table class="table">
                     <tbody>
-                        @forelse ($machineType->workCenters as $workCenter)
+                        @forelse ($machineType->machines as $machine)
                             <tr>
-                                <td class="font-mono"><a class="link" href="{{ route('work-centers.show', $workCenter) }}">{{ $workCenter->code }}</a></td>
-                                <td>{{ $workCenter->name }}</td>
-                                <td>{{ $workCenter->site->code }}</td>
-                                <td><x-active-badge :active="$workCenter->is_active" /></td>
+                                <td class="font-mono"><a class="link" href="{{ route('machines.show', $machine) }}">{{ $machine->sku }}</a></td>
+                                <td>{{ $machine->displayName() }}</td>
+                                <td>{{ $machine->site->code }}</td>
+                                <td><x-active-badge :active="$machine->is_active" /></td>
                             </tr>
                         @empty
-                            <tr><td class="text-gray-500">{{ __('No work centre uses this type yet.') }}</td></tr>
+                            <tr><td class="text-gray-500">{{ __('No machine of this type is registered.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

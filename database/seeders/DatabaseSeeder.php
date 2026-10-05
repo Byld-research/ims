@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             SiteSeeder::class,
             ReasonCodeSeeder::class,
             CategorySeeder::class,
+            MachineRegisterSeeder::class,
         ]);
 
         if (! app()->isProduction()) {
