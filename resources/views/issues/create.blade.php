@@ -15,7 +15,7 @@
                   mode: @js(old('mode', $mode)),
                   qty: @js((string) old('qty', '')),
               })"
-              @item-selected.window="lookup()">
+              @item-selected.window="lookup($event.detail.id)">
             @csrf
 
             @if ($sites->count() === 1)

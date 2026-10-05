@@ -11,7 +11,7 @@
                   toId: @js(old('to_site_id', $toId)),
                   qty: @js((string) old('qty', '')),
               })"
-              @item-selected.window="lookup()">
+              @item-selected.window="lookup($event.detail.id)">
             @csrf
 
             <div class="grid gap-5 sm:grid-cols-2">

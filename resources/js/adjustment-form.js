@@ -22,9 +22,10 @@ export default (lookupUrl, direction = 'in', siteId = '', qty = '') => ({
         this.$nextTick(() => this.lookup());
     },
 
-    async lookup() {
+    /** @param {number|null} picked the item just picked; otherwise read from the form */
+    async lookup(picked = null) {
         const hidden = this.$root.querySelector('input[name="item_id"]');
-        this.itemId = hidden?.value || this.itemId;
+        this.itemId = picked ?? (hidden?.value || this.itemId);
         if (!this.itemId || !this.siteId) {
             this.stock = null;
             return;

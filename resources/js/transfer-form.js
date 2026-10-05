@@ -16,8 +16,9 @@ export default ({ lookupUrl, fromId = '', toId = '', qty = '' }) => ({
         this.$nextTick(() => this.lookup());
     },
 
-    async lookup() {
-        const itemId = selectedItemId(this.$root);
+    /** @param {number|null} picked the item just picked; otherwise read from the form */
+    async lookup(picked = null) {
+        const itemId = picked ?? selectedItemId(this.$root);
         [this.from, this.to] = await Promise.all([
             lookupStock(lookupUrl, itemId, this.fromId),
             lookupStock(lookupUrl, itemId, this.toId),

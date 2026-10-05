@@ -6,7 +6,7 @@
     <x-page>
         <form method="POST" action="{{ route('adjustments.store') }}" class="card card-body max-w-3xl space-y-5"
               x-data="adjustmentForm(@js(route('stock.lookup')), @js((string) old('direction', $direction)), @js(old('site_id', $siteId)), @js((string) old('qty', '')))"
-              @item-selected.window="itemId = $event.detail.id; lookup()">
+              @item-selected.window="lookup($event.detail.id)">
             @csrf
 
             <div class="grid gap-5 sm:grid-cols-3">

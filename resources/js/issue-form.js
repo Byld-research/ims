@@ -26,8 +26,9 @@ export default ({ lookupUrl, siteId = '', machines = [], machineId = '', mode = 
         this.lookup();
     },
 
-    async lookup() {
-        this.stock = await lookupStock(lookupUrl, selectedItemId(this.$root), this.siteId);
+    /** @param {number|null} itemId the item just picked; otherwise read from the form */
+    async lookup(itemId = null) {
+        this.stock = await lookupStock(lookupUrl, itemId ?? selectedItemId(this.$root), this.siteId);
     },
 
     after() {
