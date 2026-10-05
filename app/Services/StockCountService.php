@@ -89,7 +89,7 @@ class StockCountService
     }
 
     /**
-     * Save counted quantities; an empty value means "not counted yet" (SPEC 5.6.3, 5.6.7).
+     * Save counted quantities; an empty value means "not counted yet" (SPEC 5.6.3, 5.6.8).
      *
      * @param  array<int, array{qty: ?string, note?: ?string}>  $entries  line id => entry
      */
@@ -139,7 +139,7 @@ class StockCountService
     }
 
     /**
-     * Post the count (SPEC 5.6.4–8).
+     * Post the count (SPEC 5.6.4–9).
      *
      * @param  array<int, string>  $unitCosts  line id => unit cost, for lines that need one
      * @return array{adjusted: int, unchanged: int, skipped: int}

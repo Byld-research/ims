@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Counted quantities per line. Empty means not counted yet (SPEC 5.6.7); zero is a real count.
+ * Counted quantities per line. Empty means not counted yet (SPEC 5.6.8); zero is a real count.
  */
 class StockCountEntriesRequest extends FormRequest
 {

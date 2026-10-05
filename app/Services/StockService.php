@@ -71,7 +71,7 @@ class StockService
                 ],
             );
 
-            // An opening balance is a physical count (SPEC 5.6.9).
+            // An opening balance is a physical count (SPEC 5.6.10).
             if ($reason->code === ReasonCode::OPENING) {
                 Stock::query()->where('item_id', $item->id)->where('site_id', $site->id)->update(['last_counted_at' => now()]);
             }
