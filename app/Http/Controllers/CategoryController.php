@@ -4,15 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use App\Support\CsvExport;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class CategoryController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Category::class);
+
+        if (CsvExport::requested($request)) {
+            return CsvExport::download('categories', ['Group', 'Category', 'Structural', 'Default bin', 'Items'],
+                Category::query()->with('parent')->withCount('items')->orderByRaw('COALESCE(parent_id, id), parent_id IS NOT NULL, name')->get()
+                    ->map(fn (Category $c) => [$c->parent?->name ?? $c->name, $c->parent ? $c->name : '', $c->is_structural, $c->default_bin, $c->items_count]));
+        }
 
         $categories = Category::query()
             ->whereNull('parent_id')
@@ -21,7 +30,7 @@ class CategoryController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('categories.index', compact('categories'));
+        return response()->view('categories.index', compact('categories'));
     }
 
     public function create(): View

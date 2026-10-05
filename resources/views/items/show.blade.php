@@ -171,6 +171,7 @@
             <div class="card-body pb-2 flex flex-wrap items-center justify-between gap-3">
                 <h3 class="card-title">{{ __('Movement history') }}</h3>
                 <form method="GET" action="{{ route('items.show', $item) }}#history" class="flex items-center gap-2 text-sm">
+                    <x-export-link />
                     <label for="history_site" class="text-gray-600">{{ __('Site') }}</label>
                     <select name="history_site" id="history_site" class="form-input py-1 w-40" onchange="this.form.submit()">
                         <option value="">{{ __('All sites') }}</option>

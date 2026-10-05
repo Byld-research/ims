@@ -78,7 +78,7 @@
 
         <section class="card" id="history">
             <div class="card-body pb-2 flex flex-wrap items-baseline justify-between gap-2">
-                <h3 class="card-title">{{ __('Consumption history') }}</h3>
+                <h3 class="card-title">{{ __('Consumption history') }} <x-export-link /></h3>
                 <p class="text-sm text-gray-600">
                     {{ __('Last 90 days: :n issues, :value USD', ['n' => $last90->movements, 'value' => \App\Support\Format::money($last90->value)]) }}
                 </p>

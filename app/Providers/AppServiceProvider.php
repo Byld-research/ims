@@ -31,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('issue-stock', fn (User $user) => Site::query()->active()->get()
             ->contains(fn (Site $site) => $user->can('issue', [Stock::class, $site])));
 
+        Gate::define('set-levels', fn (User $user) => Site::query()->active()->get()
+            ->contains(fn (Site $site) => $user->can('setLevels', [Stock::class, $site])));
+
         View::composer('*', function ($view) {
             if (auth()->check()) {
                 $view->with('currentSite', app(CurrentSite::class));

@@ -1,6 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <x-page-header :title="__('Categories')" :subtitle="__('Top-level groups are structural: items go into their subcategories.')">
+            <x-export-link />
             @can('create', App\Models\Category::class)
                 <a href="{{ route('categories.create') }}" class="btn-primary">{{ __('New category') }}</a>
             @endcan

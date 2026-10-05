@@ -2,16 +2,6 @@
     <x-slot name="header">
         <x-page-header :title="__('Stock')" :subtitle="$site ? __('Quantities at every site; levels and value at :site.', ['site' => $site->code]) : __('Quantities at every site.')">
             <x-export-link />
-            <a href="{{ route('categories.index') }}" class="btn-secondary btn-sm">{{ __('Categories') }}</a>
-            @if ($site && auth()->user()->can('setLevels', [App\Models\Stock::class, $site]))
-                <a href="{{ route('stock.levels', ['site' => $site->id]) }}" class="btn-secondary btn-sm">{{ __('Min levels & bins') }}</a>
-            @endif
-            @if ($site && auth()->user()->can('adjust', [App\Models\Stock::class, $site]))
-                <a href="{{ route('adjustments.create') }}" class="btn-secondary btn-sm">{{ __('Adjust') }}</a>
-            @endif
-            @if ($site && auth()->user()->can('adjust', [App\Models\Stock::class, $site]))
-                <a href="{{ route('transfers.create') }}" class="btn-secondary btn-sm">{{ __('Transfer in') }}</a>
-            @endif
             @can('create', App\Models\Item::class)
                 <a href="{{ route('items.create') }}" class="btn-primary">{{ __('New item') }}</a>
             @endcan

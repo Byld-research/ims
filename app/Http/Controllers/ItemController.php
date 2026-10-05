@@ -8,18 +8,26 @@ use App\Models\Category;
 use App\Models\Item;
 use App\Models\PurchaseOrderLine;
 use App\Models\Site;
+use App\Support\CsvExport;
+use App\Support\LedgerCsv;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class ItemController extends Controller
 {
-    public function show(Request $request, Item $item): View
+    public function show(Request $request, Item $item): Response
     {
         Gate::authorize('view', $item);
 
         $historySite = $request->integer('history_site') ?: null;
+
+        if (CsvExport::requested($request)) {
+            return LedgerCsv::download('movements-'.strtolower($item->sku),
+                $item->transactions()->getQuery()->when($historySite, fn ($q, $siteId) => $q->where('site_id', $siteId)));
+        }
 
         $item->load([
             'category.parent',
@@ -28,7 +36,7 @@ class ItemController extends Controller
             'machineTypes' => fn ($q) => $q->orderBy('code'),
         ]);
 
-        return view('items.show', [
+        return response()->view('items.show', [
             'item' => $item,
             'sites' => Site::query()->active()->orderBy('code')->get(),
             'stocksBySite' => $item->stocks->keyBy('site_id'),

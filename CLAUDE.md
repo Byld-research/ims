@@ -28,7 +28,8 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - **The current site comes from `App\Support\CurrentSite`.** Never assume a site silently. `null` means the administrators' consolidated view.
 - **Nothing is hard-deleted.** Records are deactivated (`is_active`).
 - **Display formatting goes through `App\Support\Format`.** Timestamps are stored in UTC and shown in the site's time zone.
-- **New screens get a `config/navigation.php` entry.** It appears once its route exists.
+- **New screens go into a section of `config/navigation.php`** (Stock, Purchasing, Machines) or into `actions` (stock movements). Don't add top-level entries. A link appears once its route exists and the user passes its `can`. Page headers keep only page-level actions (Export CSV, New …); navigation links belong in the menu.
+- **Charts follow the dataviz skill.** Single-series bars use `<x-bar-list>` in one hue (#2a78d6). After changing a chart, render the page and look at it: Playwright screenshots caught two bugs in stage 7 that no test saw.
 - **List views support `?export=csv` via `App\Support\CsvExport`.** Every list needs one (SPEC 7).
 - **Pick items with `<x-item-picker>`**, backed by `items.search`.
 - **`tests/Feature/WriteRoutesTest.php` sweeps every authenticated write route as an operator.** A new route parameter needs a fixture there.
@@ -42,5 +43,5 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - [x] Stage 4: purchase orders, numbering, transitions, partial receipts, close short, over-receipt warning, on-order quantities, real-process concurrency tests
 - [x] Stage 5: issue to machine / general (three-step form), transfers entered by the receiving site, machine consumption history, concurrent opposite-transfer test
 - [x] Stage 6: stock counts (add by category/class/kanban/due/item, blind sheet by bin, review against live stock, post, double-post protection)
-- [ ] Stage 7: dashboard, kanban view, CSV exports
+- [x] Stage 7: dashboard (alerts and figures), kanban view, CSV on every list incl. movement histories, grouped menu with an Issue action button
 - [ ] Stage 8: daily digest, audit log, hardening

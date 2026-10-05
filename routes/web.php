@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItemSearchController;
+use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\MachineController;
 use App\Http\Controllers\MachineTypeController;
 use App\Http\Controllers\MachineTypeItemController;
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function () {
     // Catalogue
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
     Route::get('/stock/lookup', StockLookupController::class)->name('stock.lookup');
+    Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban.index');
     Route::get('/stock/levels', [StockLevelController::class, 'edit'])->name('stock.levels');
     Route::put('/stock/levels', [StockLevelController::class, 'update'])->name('stock.levels.update');
     Route::get('/issues/create', [IssueController::class, 'create'])->name('issues.create');

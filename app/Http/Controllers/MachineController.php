@@ -11,6 +11,7 @@ use App\Models\Stock;
 use App\Models\StockTransaction;
 use App\Support\CsvExport;
 use App\Support\CurrentSite;
+use App\Support\LedgerCsv;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -52,9 +53,14 @@ class MachineController extends Controller
         ]);
     }
 
-    public function show(Request $request, Machine $machine): View
+    public function show(Request $request, Machine $machine): Response
     {
         Gate::authorize('view', $machine);
+
+        if (CsvExport::requested($request)) {
+            return LedgerCsv::download('consumption-'.strtolower($machine->sku),
+                StockTransaction::query()->where('machine_id', $machine->id)->where('type', TransactionType::IssueMachine));
+        }
 
         $machine->load(['site', 'machineType']);
         $partsList = $machine->partsList();
@@ -68,7 +74,7 @@ class MachineController extends Controller
 
         $issues = StockTransaction::query()->where('machine_id', $machine->id)->where('type', TransactionType::IssueMachine);
 
-        return view('machines.show', [
+        return response()->view('machines.show', [
             'machine' => $machine,
             'partsList' => $partsList,
             'stocks' => $stocks,
