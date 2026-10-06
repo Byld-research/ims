@@ -18,6 +18,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderActionController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseOrderLineController;
+use App\Http\Controllers\QuickOrderController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\SiteSelectionController;
 use App\Http\Controllers\StockController;
@@ -68,7 +69,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/machine-type-items/{machineTypeItem}', [MachineTypeItemController::class, 'update'])->name('machine-type-items.update');
     Route::delete('/machine-type-items/{machineTypeItem}', [MachineTypeItemController::class, 'destroy'])->name('machine-type-items.destroy');
 
-    // Purchase orders
+    // Purchase orders (quick order first, so /quick is not read as an order id)
+    Route::get('/purchase-orders/quick', [QuickOrderController::class, 'create'])->name('purchase-orders.quick');
+    Route::post('/purchase-orders/quick', [QuickOrderController::class, 'store'])->name('purchase-orders.quick.store');
     Route::resource('purchase-orders', PurchaseOrderController::class)->only(['index', 'create', 'store', 'show', 'update'])
         ->parameters(['purchase-orders' => 'purchaseOrder']);
     Route::post('/purchase-orders/{purchaseOrder}/lines', [PurchaseOrderLineController::class, 'store'])->name('purchase-orders.lines.store');

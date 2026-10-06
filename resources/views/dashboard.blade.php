@@ -51,14 +51,24 @@
         <div class="grid gap-6 xl:grid-cols-3">
             {{-- 2. Stock to act on --}}
             <section id="act" class="card xl:col-span-2 scroll-mt-24 overflow-hidden">
+                {{-- Ticked items go to the quick order screen (SPEC 5.3a); a plain GET, nothing is created yet. --}}
+                <form method="GET" action="{{ route('purchase-orders.quick') }}" x-data="{ picked: 0 }"
+                      @change="picked = $el.querySelectorAll('input[name=\'stocks[]\']:checked').length">
                 <header class="card-body pb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('Stock to act on') }}</h3>
                         <p class="text-xs text-gray-500">{{ __('Worst first: out of stock, then high criticality, then least left. The mark on each bar is the minimum (or one bin of a two-bin item).') }}</p>
                     </div>
-                    @if ($attention['total'] > $attention['rows']->count())
-                        <a class="link text-sm" href="{{ route('stock.index', ['below' => 1]) }}">{{ __('All :n', ['n' => $attention['total']]) }} →</a>
-                    @endif
+                    <div class="flex items-center gap-3">
+                        @if ($attention['total'] > $attention['rows']->count())
+                            <a class="link text-sm" href="{{ route('stock.index', ['below' => 1]) }}">{{ __('All :n', ['n' => $attention['total']]) }} →</a>
+                        @endif
+                        @if ($canOrder)
+                            <button class="btn-primary btn-sm" :disabled="picked === 0" :class="picked === 0 && 'opacity-50 cursor-not-allowed'">
+                                {{ __('Order selected') }}<span x-show="picked > 0" x-cloak>&nbsp;(<span x-text="picked"></span>)</span>
+                            </button>
+                        @endif
+                    </div>
                 </header>
 
                 @if ($attention['rows']->isEmpty())
@@ -68,7 +78,7 @@
                     </div>
                 @else
                     {{-- Columns from md up; on a phone each item stacks: name and status, the bar, then order and usage. --}}
-                    <div class="hidden md:grid md:grid-cols-[minmax(0,2.4fr)_6.5rem_minmax(9rem,1.4fr)_5rem_7rem] gap-4 bg-gray-50 px-5 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <div class="hidden md:grid md:grid-cols-[minmax(0,2.4fr)_6.5rem_minmax(9rem,1.4fr)_8rem_7rem] gap-4 bg-gray-50 px-5 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
                         <span>{{ __('Item') }}</span><span>{{ __('Status') }}</span><span>{{ __('Level') }}</span>
                         <span class="text-right">{{ __('On order') }}</span><span>{{ __('Used, 12 weeks') }}</span>
                     </div>
@@ -77,7 +87,7 @@
                             @php
                                 $stock = $row['stock'];
                                 $key = $stock->item_id.':'.$stock->site_id;
-                                $ordered = $onOrder[$stock->item_id][$stock->site_id] ?? null;
+                                $underway = $inProgress[$stock->item_id][$stock->site_id] ?? [];
                                 $threshold = $stock->is_kanban ? $stock->bin_qty : $stock->min_level;
                                 $chip = match ($row['severity']) {
                                     'critical' => __('Out'),
@@ -90,12 +100,23 @@
                                     $siteCodes ? $stock->site->code : null,
                                 ]);
                             @endphp
-                            <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3 md:grid-cols-[minmax(0,2.4fr)_6.5rem_minmax(9rem,1.4fr)_5rem_7rem]"
+                            <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3 md:grid-cols-[minmax(0,2.4fr)_6.5rem_minmax(9rem,1.4fr)_8rem_7rem]"
                                 style="box-shadow: inset 4px 0 0 var(--status-{{ $row['severity'] }})">
-                                <div class="min-w-0">
-                                    <a class="link font-mono text-sm" href="{{ route('items.show', $stock->item) }}">{{ $stock->item->sku }}</a>
-                                    <span class="text-sm text-gray-900">{{ $stock->item->name }}</span>
-                                    <span class="block text-xs text-gray-500">{{ implode(' · ', $details) }}</span>
+                                <div class="flex min-w-0 items-start gap-3">
+                                    @if ($canOrder)
+                                        @can('create', [App\Models\PurchaseOrder::class, $stock->site])
+                                            <input type="checkbox" name="stocks[]" value="{{ $stock->id }}"
+                                                   class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                   aria-label="{{ __('Select :sku for ordering', ['sku' => $stock->item->sku]) }}">
+                                        @else
+                                            <span class="w-4 shrink-0"></span>
+                                        @endcan
+                                    @endif
+                                    <div class="min-w-0">
+                                        <a class="link font-mono text-sm" href="{{ route('items.show', $stock->item) }}">{{ $stock->item->sku }}</a>
+                                        <span class="text-sm text-gray-900">{{ $stock->item->name }}</span>
+                                        <span class="block text-xs text-gray-500">{{ implode(' · ', $details) }}</span>
+                                    </div>
                                 </div>
                                 <div><x-status-chip :severity="$row['severity']" :label="$chip" /></div>
                                 <div class="col-span-2 md:col-span-1">
@@ -107,11 +128,16 @@
                                 </div>
                                 <div class="text-xs text-gray-600 md:text-right">
                                     <span class="md:hidden">{{ __('On order') }}:</span>
-                                    @if ($ordered)
-                                        <span class="badge-indigo">{{ Format::qty($ordered) }}</span>
-                                    @else
+                                    {{-- Orders in progress, drafts included, so nobody orders the same shortage twice. --}}
+                                    @forelse ($underway as $po)
+                                        <a href="{{ route('purchase-orders.show', $po['id']) }}" class="block hover:underline"
+                                           title="{{ __(':number, :status, :qty outstanding', ['number' => $po['number'], 'status' => strtolower($po['status']->label()), 'qty' => Format::qty($po['qty'])]) }}">
+                                            <span class="font-mono text-indigo-700">{{ $po['number'] }}</span>
+                                            <span class="block text-gray-500">{{ $po['status']->label() }} · {{ Format::qty($po['qty']) }}</span>
+                                        </a>
+                                    @empty
                                         {{ __('none') }}
-                                    @endif
+                                    @endforelse
                                 </div>
                                 <div class="justify-self-end md:justify-self-start">
                                     <x-sparkline :values="$usage[$key] ?? []" :label="__('Used per week, last 12 weeks')" />
@@ -120,6 +146,7 @@
                         @endforeach
                     </ul>
                 @endif
+                </form>
             </section>
 
             {{-- 3. Orders to chase --}}

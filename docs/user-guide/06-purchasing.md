@@ -32,6 +32,24 @@ Goods sometimes arrive without a confirmation or shipping notice: receiving is p
 
 Dates set by the steps (ordered, confirmed, ETA, shipped, closed) and the tracking reference can be corrected under **Details → Edit**.
 
+## Quick order from the dashboard
+
+The fastest way to reorder what is short. On the **Dashboard**, under *Stock to act on*:
+
+1. Tick the items to order, then **Order selected**.
+
+   ![Ticking items on the dashboard](images/dashboard-quick-order.png)
+
+2. On **Quick order**, check each line:
+   - **Supplier**: the one the item was last ordered from. Without one, choose it; any active supplier can be chosen.
+   - **Quantity**: suggested, change it if needed. A two-bin item gets **one bin**. Any other item gets enough to reach **twice its minimum**, less what is already on order, rounded up to whole packs of that supplier.
+   - **Unit price**: leave it blank to use the supplier's last price (shown in grey). A supplier with no last price needs a price.
+3. **Create draft orders**. One draft is created per supplier (and per site), e.g. three suppliers give three drafts. Nothing is sent yet: continue from step 3 above (**Mark as sent to supplier**) on each draft.
+
+![Quick order](images/quick-order.png)
+
+**Avoiding double orders.** Items that are already on an order, **drafts included**, show it: the order number and status appear in the *On order* column of the dashboard and as *Already on PO-…* on the quick order screen. Such items start unticked; tick them only if you really want to order more.
+
 ## Receiving goods
 
 **Receive goods** on the order page.

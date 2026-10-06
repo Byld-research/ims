@@ -30,7 +30,8 @@ Every item that needs replenishment, **worst first**: out of stock, then high cr
 
 - a coloured stripe and a status: **Out** (red ✕), **Below min** (orange ▲ for high criticality, amber ● otherwise), **Refill** (amber ●); the criticality is written under the item name;
 - a **level bar**: the fill is the stock, the black mark is the minimum (or one bin of a two-bin item);
-- what is already **on order**;
+- what is already **on order**: the order number, its status and the quantity still to come. **Drafts count too**, so an item someone has just put on a draft is visible to everyone;
+- a **tick box** (managers and administrators): tick items and choose **Order selected** to create draft purchase orders in one go, see [Quick order](06-purchasing.md#quick-order-from-the-dashboard);
 - **used, 12 weeks**: a small line of weekly usage, the current week as a blue dot. A flat line or *not used* means the item is not moving; a busy line means it needs watching.
 
 ### 3. Orders to chase

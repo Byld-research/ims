@@ -23,6 +23,9 @@ The system refuses anything that would make the records wrong, and says why. The
 | *Lines can be changed only while the order is a draft.* | The order was sent; the supplier works from it. | For more items, create another order. To drop a line, close it short. |
 | *Add at least one line before sending the order.* | Empty draft. | Add lines first. |
 | *Enter a price: Kraków warehouse has no last price for SP-10012.* | Nobody has ordered this item from this supplier yet. | Enter the price from the quote. |
+| *Tick at least one item under Stock to act on, then choose Order selected.* | **Order selected** was used with nothing ticked, or only items at another site. | Tick the items on the dashboard first. |
+| *Tick at least one item to order.* | Every line on the quick order screen is unticked. | Tick the lines to order, or **Cancel**. |
+| *Choose a supplier.* | A ticked quick order line has no supplier. | Choose one; any active supplier is allowed. |
 | *An order that is draft cannot become confirmed.* | Steps must follow in order. | Use the button the order page shows. |
 | *Goods have been received on this order, so it cannot be cancelled. Close the remaining lines short instead.* | Something already arrived. | **Close short…** on the open lines. |
 | *Line SP-10001 was closed short and cannot receive more.* | The line was closed earlier. | Receive the extra quantity with an adjustment (*Found, not recorded*) and a note with the order number, or order it again. |

@@ -47,3 +47,4 @@ Use the terms from SPEC 1a exactly. *Machine type* is a letter (C = Truss Saw) a
 - [x] Stage 6: stock counts (add by category/class/kanban/due/item, blind sheet by bin, review against live stock, post, double-post protection)
 - [x] Stage 7: dashboard (alerts and figures), kanban view, CSV on every list incl. movement histories, grouped menu with an Issue action button
 - [x] Stage 8: daily digest, audit log, admin screens (users, sites, reason codes, audit log), backups with restore test, security headers, schedule
+- [x] After go-live: quick order from the dashboard (SPEC 5.3a), orders in progress (drafts included) shown per item

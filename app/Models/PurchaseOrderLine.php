@@ -78,6 +78,49 @@ class PurchaseOrderLine extends Model
         return $result;
     }
 
+    /**
+     * Orders already under way per item and site, drafts included, so nobody orders the same
+     * shortage twice. Lines closed short or received in full are left out.
+     *
+     * @param  list<int>  $itemIds
+     * @return array<int, array<int, list<array{id: int, number: string, status: PurchaseOrderStatus, qty: string}>>> item id => site id => orders
+     */
+    public static function inProgress(array $itemIds, ?int $siteId = null): array
+    {
+        if ($itemIds === []) {
+            return [];
+        }
+
+        $statuses = [PurchaseOrderStatus::Draft->value, ...array_map(fn (PurchaseOrderStatus $s) => $s->value,
+            array_filter(PurchaseOrderStatus::cases(), fn ($s) => $s->acceptsReceipts()))];
+
+        $rows = static::query()
+            ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_lines.purchase_order_id')
+            ->whereIn('purchase_order_lines.item_id', $itemIds)
+            ->whereIn('purchase_orders.status', $statuses)
+            ->where('purchase_order_lines.is_closed', false)
+            ->whereColumn('purchase_order_lines.qty_received', '<', 'purchase_order_lines.qty_ordered')
+            ->when($siteId, fn ($q) => $q->where('purchase_orders.site_id', $siteId))
+            ->groupBy('purchase_order_lines.item_id', 'purchase_orders.site_id', 'purchase_orders.id', 'purchase_orders.number', 'purchase_orders.status')
+            ->selectRaw('purchase_order_lines.item_id, purchase_orders.site_id, purchase_orders.id, purchase_orders.number,
+                purchase_orders.status, SUM(qty_ordered - qty_received) AS qty')
+            ->orderBy('purchase_orders.id')
+            ->toBase()
+            ->get();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row->item_id][$row->site_id][] = [
+                'id' => (int) $row->id,
+                'number' => $row->number,
+                'status' => PurchaseOrderStatus::from($row->status),
+                'qty' => Decimal::round((string) $row->qty, 3),
+            ];
+        }
+
+        return $result;
+    }
+
     public function value(): string
     {
         return Decimal::round(Decimal::mul($this->qty_ordered, $this->unit_price), 4);

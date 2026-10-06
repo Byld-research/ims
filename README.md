@@ -111,6 +111,7 @@ stateDiagram-v2
     CANCELLED --> [*]
 ```
 
+- **Quick order**: tick short items on the dashboard and choose **Order selected**; the system suggests supplier, quantity (one bin, or up to twice the minimum less what is on order) and price, and creates one draft per supplier. Items already on an order, drafts included, show the order number so nobody orders them twice.
 - Lines can be changed only while the order is a **draft**. An empty price takes the supplier's last price.
 - Goods may arrive without a confirmation or shipping notice: receiving is possible from **Ordered** on.
 - **Cancel** is possible only while **nothing has been received**.

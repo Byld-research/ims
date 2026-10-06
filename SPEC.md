@@ -513,6 +513,19 @@ stateDiagram-v2
 8. `ordered_at`, `confirmed_at`, `shipped_at` and `closed_at` are set automatically on the corresponding transition and are editable afterwards by a manager.
 9. Order quantities, received quantities and `unit_price` are always in the item's unit of measure. `supplier_items.pack_size` is informational: it is shown next to the line to help the manager order in whole packs, and the over-receipt warning mentions it, but no conversion is ever applied.
 
+### 5.3a Quick order from the dashboard
+
+A manager (or administrator) ticks items under *Stock to act on* on the dashboard and chooses *Order selected*. A review screen lists the ticked items, one line each:
+
+1. **Supplier**: the supplier the item was last ordered from (orders not in DRAFT or CANCELLED); otherwise the most recently changed `supplier_items` link; otherwise none, and the manager must choose one. Any active supplier can be chosen.
+2. **Suggested quantity**: a kanban item reorders one bin (`bin_qty`); any other item reorders up to twice its minimum (`2 × min_level − qty`). The quantity outstanding on orders in progress for the item at that site is subtracted, and the result is rounded up to whole `pack_size` units of the chosen supplier. The manager can change it.
+3. **Price**: blank uses the supplier's last price (4.9); without a last price a price must be entered.
+4. Items already on an order in progress start unticked and show which orders they are on.
+
+Confirming creates one DRAFT order per site and supplier, all or nothing, with the note *Created from the dashboard*. Nothing is sent and stock does not change; the drafts follow 5.3. Lines at sites the user may not order for are refused (6).
+
+**Orders in progress** for an item at a site are orders in DRAFT, ORDERED, CONFIRMED, SHIPPED or PARTIALLY_RECEIVED with a line for the item that is not closed and not received in full. The dashboard shows them next to each item under *Stock to act on* (number, status and outstanding quantity), so the same shortage is not ordered twice. Unlike the on-order quantity in 5.5, drafts are included here.
+
 ### 5.4 Numbering
 
 - Purchase orders: `PO-{YYYY}-{NNNN}`, four digits, sequence restarting each calendar year.
@@ -651,7 +664,7 @@ Scoped to the selected site; administrators may switch to a consolidated view.
 
 **Alert panel, at the top**
 
-- items below minimum, high criticality first
+- items below minimum, high criticality first, each with its orders in progress (5.3a) and a tick box for a quick order
 - kanban items at or below one bin
 - items at zero stock that have a minimum set
 - purchase orders past their ETA with nothing received
@@ -858,6 +871,13 @@ Each of these must be covered by an automated test.
 32. Adding a revision-specific line for an item that already has an all-revisions line on the same type is rejected, and vice versa.
 33. Stock can be issued to 004C only at BPC002. After 004C is relocated to BPC001, issues go through BPC001, and earlier transactions still show BPC002.
 
+**Added in revision 1.9 — quick order**
+
+34. Ticking a Colorado item with minimum 4 and 1 in stock, supplied in packs of 5, suggests 10; a two-bin item with 6 per bin suggests 6; an item with 3 already on a draft order starts unticked.
+35. Confirming items from two suppliers creates two DRAFT orders at the item's site, with their lines and the suppliers' last prices, and changes no stock.
+36. A manager at BPC002 cannot include a BPC001 item in a quick order; an operator sees no tick boxes and is refused.
+37. The dashboard shows a draft order's number and status next to an item on it.
+
 ---
 
 ## Change history
@@ -865,6 +885,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.9 | 2026-10-06 | Quick order from the dashboard (5.3a): tick items, review suggested supplier, quantity and price, create one draft per site and supplier; orders in progress, drafts included, shown next to each item; criteria 34–37 |
 | 1.8 | 2026-10-06 | Criticality High, Normal, Low (was A, B, C), stored as HIGH, NORMAL, LOW; stock status *Low* renamed *Below min* to avoid a clash |
 | 1.7 | 2026-10-06 | Interface names: Inventory, Two-bin items (was Kanban), Stock counts, Min levels & locations; shelf *bin* shown as *Location*; terms added to 1a; database names unchanged |
 | 1.6 | 2026-10-05 | Operations section 9a (scheduler, backups with restore test, nightly integrity check, sessions, passwords, HTTPS); administrators' digest hour; audited entities listed; digest at most once per day |
