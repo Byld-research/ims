@@ -26,7 +26,28 @@ The Cloud Web 1 plan offered PHP 8.0 at most and MySQL 5.6, both out of support;
 4. **Application**: code uploaded with rsync; `.env` with `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_LIFETIME=60`, `SESSION_SECURE_COOKIE=true`, `BACKUP_PATH=/var/backups/ims`; `migrate` and `db:seed` loaded the sites, categories, reason codes and machine register only: no demo data, no development accounts.
 5. **nginx**: site `/etc/nginx/sites-available/ims`, document root `public/`, dotfiles denied, built assets cached for a year.
 6. **Scheduler**: `/etc/cron.d/ims` runs `php artisan schedule:run` every minute as `www-data` (digests hourly per site, backup 07:00 UTC, ledger check 07:30 UTC).
-7. **HTTPS**: `sudo certbot --nginx -d ims.byldinc.com --redirect` once the DNS record points to the VPS; certbot renews automatically.
+7. **HTTPS**: one certificate for `ims.byldinc.com` and the VPS host name `vps-7edfab5f.vps.ovh.ca`; certbot renews it automatically.
+8. **Email**: Microsoft 365 *Direct Send*. The app hands mail to the domain's own mail server without a login, so it **reaches @byldinc.com addresses only**:
+
+   ```
+   MAIL_MAILER=smtp
+   MAIL_SCHEME=smtp
+   MAIL_HOST=byldinc-com.mail.protection.outlook.com
+   MAIL_PORT=25
+   MAIL_FROM_ADDRESS="inventory@byldinc.com"
+   MAIL_FROM_NAME="BPC Inventory"
+   OPS_EMAIL=admin@byldinc.com
+   ```
+
+   It works because the domain's SPF record lists the VPS address `144.217.90.113`; keep it there. Outgoing connections prefer IPv4 (`precedence ::ffff:0:0/96 100` in `/etc/gai.conf`): Microsoft rejects the VPS's IPv6 address, which is on a Spamhaus list and not in SPF. If a Microsoft 365 administrator enables *Reject Direct Send*, mail stops; then use an SMTP relay connector for `144.217.90.113` or a transactional mail service.
+
+## Changing `.env` on the server
+
+`.env` must stay `-rw-r----- ubuntu www-data`, or PHP cannot read it and the app runs without its settings. `sed -i` and most editors replace the file and lose the group, so after any edit:
+
+```sh
+sudo chgrp www-data .env && chmod 640 .env && sudo -u www-data php artisan optimize && sudo systemctl reload php8.5-fpm
+```
 
 ## Creating the first administrator
 
@@ -58,6 +79,5 @@ ssh -i ~/.ssh/vps_ims -o IdentitiesOnly=yes ubuntu@144.217.90.113 'cd /var/www/i
 
 ## Still to do
 
-- **Email (SMTP)**: `MAIL_*` in `.env` are set to `log`; the daily digest and password reset emails need real SMTP settings.
 - **Off-server backups**: the nightly dumps are on the same disk as the database. Enable OVH's automated VPS backup, or copy `/var/backups/ims` elsewhere.
-- **OPS_EMAIL** in `.env`, so failed nightly jobs are reported.
+- **Users outside @byldinc.com** would need a different mail setup (see Email above).
