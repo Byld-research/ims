@@ -29,17 +29,21 @@ echo "→ Assets"
 npm run build >/dev/null
 
 echo "→ Upload $(git rev-parse --short HEAD) to $HOST"
-rsync -az --delete -e "ssh -i $KEY -o IdentitiesOnly=yes" \
+# --no-perms: keep the server's permissions, so storage stays writable by www-data.
+rsync -rltz --no-perms --delete -e "ssh -i $KEY -o IdentitiesOnly=yes" \
     --exclude .git --exclude node_modules --exclude vendor --exclude .env --exclude tests --exclude docs \
     --exclude .phpunit.cache --exclude .phpunit.result.cache --exclude .DS_Store \
     --exclude 'storage/logs/*' --exclude 'storage/app/backups' --exclude 'storage/framework/cache/data/*' \
     --exclude 'storage/framework/sessions/*' --exclude 'storage/framework/views/*' --exclude 'storage/framework/testing' \
+    --exclude 'bootstrap/cache/*.php' \
     ./ "$HOST:$APP_DIR/"
 
 echo "→ Install and migrate"
 "${SSH[@]}" "set -e; cd $APP_DIR
     composer install --no-dev --optimize-autoloader --no-interaction --quiet
     sudo chgrp -R www-data storage bootstrap/cache
+    sudo find storage bootstrap/cache -type d -exec chmod 2775 {} +
+    sudo find storage bootstrap/cache -type f -exec chmod 664 {} +
     sudo -u www-data php artisan down --retry=15 >/dev/null || true
     sudo -u www-data php artisan migrate --force
     sudo -u www-data php artisan optimize >/dev/null
