@@ -257,6 +257,10 @@ The suites run against MariaDB on purpose: triggers, CHECK constraints and row l
 
 ### Production
 
+The production server and how to update it: **[docs/deployment.md](docs/deployment.md)** (`scripts/deploy.sh` deploys a new version).
+
+Generic set-up for another server:
+
 1. Environment: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://…`, database credentials, SMTP (`MAIL_*`), `SESSION_LIFETIME=60`, `SESSION_SECURE_COOKIE=true`, `OPS_EMAIL`, `BACKUP_PATH` (a mounted volume off the database server), `ADMIN_DIGEST_HOUR` and `ADMIN_DIGEST_TIMEZONE`. Leave `SEED_*` empty.
 2. Deploy: `composer install --no-dev -o && npm ci && npm run build && php artisan migrate --force && php artisan db:seed --force && php artisan optimize`.
 3. Cron, as the web user:
