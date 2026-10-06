@@ -24,7 +24,7 @@
 @endif
 
 @if ($sections['kanban']['total'])
-## {{ __('Kanban refills') }} ({{ $sections['kanban']['total'] }})
+## {{ __('Two-bin refills') }} ({{ $sections['kanban']['total'] }})
 
 <x-mail::table>
 | {{ __('Item') }} | @if ($allSites){{ __('Site') }} | @endif{{ __('Stock / bin') }} | {{ __('On order') }} |

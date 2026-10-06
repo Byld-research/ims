@@ -13,7 +13,7 @@
     $tiles = [
         ['key' => 'out', 'label' => __('Out of stock'), 'count' => $alerts['out']['total'], 'severity' => 'critical', 'href' => '#act'],
         ['key' => 'below', 'label' => __('Below minimum'), 'count' => $alerts['below']['total'], 'severity' => 'serious', 'href' => '#act'],
-        ['key' => 'kanban', 'label' => __('Kanban refill'), 'count' => $alerts['kanban']['total'], 'severity' => 'warning', 'href' => '#act'],
+        ['key' => 'kanban', 'label' => __('Two-bin refill'), 'count' => $alerts['kanban']['total'], 'severity' => 'warning', 'href' => '#act'],
         ['key' => 'orders', 'label' => __('Orders to chase'), 'count' => $orderCount, 'severity' => 'serious', 'href' => '#orders'],
         ['key' => 'due', 'label' => __('Due for counting'), 'count' => $alerts['due']['total'], 'severity' => 'warning',
             'href' => auth()->user()->can('viewAny', App\Models\StockCount::class) ? route('stock-counts.index') : null],
@@ -54,7 +54,7 @@
                 <header class="card-body pb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('Stock to act on') }}</h3>
-                        <p class="text-xs text-gray-500">{{ __('Worst first: out of stock, then class A, then least left. The mark on each bar is the minimum (or one kanban bin).') }}</p>
+                        <p class="text-xs text-gray-500">{{ __('Worst first: out of stock, then class A, then least left. The mark on each bar is the minimum (or one bin of a two-bin item).') }}</p>
                     </div>
                     @if ($attention['total'] > $attention['rows']->count())
                         <a class="link text-sm" href="{{ route('stock.index', ['below' => 1]) }}">{{ __('All :n', ['n' => $attention['total']]) }} →</a>
@@ -86,7 +86,7 @@
                                 };
                                 $details = array_filter([
                                     $stock->item->criticality ? __('Class :c', ['c' => $stock->item->criticality->value]) : null,
-                                    $stock->bin ? __('bin :b', ['b' => $stock->bin]) : null,
+                                    $stock->bin ? __('location :b', ['b' => $stock->bin]) : null,
                                     $siteCodes ? $stock->site->code : null,
                                 ]);
                             @endphp

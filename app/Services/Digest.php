@@ -46,7 +46,7 @@ class Digest
     {
         $parts = array_filter([
             $this->sections['below']['total'] ? trans_choice('{1} 1 item below minimum|[2,*] :count items below minimum', $this->sections['below']['total'], ['count' => $this->sections['below']['total']]) : null,
-            $this->sections['kanban']['total'] ? trans_choice('{1} 1 kanban refill|[2,*] :count kanban refills', $this->sections['kanban']['total'], ['count' => $this->sections['kanban']['total']]) : null,
+            $this->sections['kanban']['total'] ? trans_choice('{1} 1 two-bin refill|[2,*] :count two-bin refills', $this->sections['kanban']['total'], ['count' => $this->sections['kanban']['total']]) : null,
             ($orders = $this->sections['late']['total'] + $this->sections['unconfirmed']['total'])
                 ? trans_choice('{1} 1 order to chase|[2,*] :count orders to chase', $orders, ['count' => $orders]) : null,
         ]);

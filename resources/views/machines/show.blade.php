@@ -34,7 +34,7 @@
                             <th>{{ __('Reference') }}</th>
                             <th class="num">{{ __('Qty / machine') }}</th>
                             <th class="num">{{ __('In stock') }}</th>
-                            <th>{{ __('Bin') }}</th>
+                            <th>{{ __('Location') }}</th>
                             @if ($canIssue)<th></th>@endif
                         </tr>
                     </thead>

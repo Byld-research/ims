@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Kanban items at the selected site, those needing a refill first (SPEC 5.7; screen 13).
+ * Two-bin (kanban) items at the selected site, those needing a refill first (SPEC 5.7; screen 13).
  * Stock stays in the item's unit; bins are shown only as a reading aid.
  */
 class KanbanController extends Controller
@@ -38,7 +38,7 @@ class KanbanController extends Controller
         $bins = fn (Stock $s) => Decimal::round(Decimal::div($s->qty, $s->bin_qty), 1);
 
         if (CsvExport::requested($request)) {
-            return CsvExport::download('kanban', ['Site', 'SKU', 'Name', 'UoM', 'Bin', 'Qty per bin', 'In stock', 'Bins left', 'Needs refill', 'On order'],
+            return CsvExport::download('two-bin-items', ['Site', 'SKU', 'Name', 'UoM', 'Location', 'Qty per bin', 'In stock', 'Bins left', 'Needs refill', 'On order'],
                 $stocks->map(fn (Stock $s) => [$s->site->code, $s->item->sku, $s->item->name, $s->item->uom, $s->bin, $s->bin_qty, $s->qty,
                     $bins($s), $s->needsReplenishment(), $onOrder[$s->item_id][$s->site_id] ?? '0.000']));
         }

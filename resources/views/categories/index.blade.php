@@ -15,7 +15,7 @@
                     <tr>
                         <th>{{ __('Category') }}</th>
                         <th>{{ __('Type') }}</th>
-                        <th>{{ __('Default bin') }}</th>
+                        <th>{{ __('Default location') }}</th>
                         <th class="num">{{ __('Items') }}</th>
                         <th></th>
                     </tr>

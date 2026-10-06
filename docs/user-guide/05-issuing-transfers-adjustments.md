@@ -16,9 +16,9 @@ These three are the only ways stock changes outside purchase orders and counts. 
    - **General use**: workshop, building, samples. Choose the reason; *Other, see note* needs a note.
 3. **Quantity**, in the item's unit. A note is optional (e.g. work order, shift).
 
-Before you save, the grey line shows stock now → after, and the bin. If there is not enough, it turns red.
+Before you save, the grey line shows stock now → after, and the location. If there is not enough, it turns red.
 
-After **Issue**, the form stays open with the same machine, ready for the next part. **Done** returns to the stock list.
+After **Issue**, the form stays open with the same machine, ready for the next part. **Done** returns to the inventory.
 
 ![General use](images/issue-general.png)
 

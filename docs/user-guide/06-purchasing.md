@@ -4,7 +4,7 @@
 
 Purchase orders are raised by the **manager of the site that needs the goods**; each order delivers to one site. Everyone can read orders. Payment and invoices are handled outside the system.
 
-**Before ordering**, check the other site's column on the stock list: a transfer is usually faster than an order with a 20–60 day lead time.
+**Before ordering**, check the other site's column in the inventory: a transfer is usually faster than an order with a 20–60 day lead time.
 
 ## The order list
 

@@ -22,7 +22,7 @@ Machines in Poland are not in the system until they are installed at a US site; 
 
 ![Machine page for 004C](images/machine.png)
 
-- **Parts list for revision 2.0**: the lines of the type's parts list that apply to this machine's revision, with **stock at this machine's site** and the bin. Lines without a revision apply to all revisions; lines marked *Rev. 2.0 only* apply only to 2.0 machines.
+- **Parts list for revision 2.0**: the lines of the type's parts list that apply to this machine's revision, with **stock at this machine's site** and its location. Lines without a revision apply to all revisions; lines marked *Rev. 2.0 only* apply only to 2.0 machines.
 - **Issue** next to a part (when in stock) opens the issue form with the machine and the item already filled in.
 - **Consumption history**: everything issued to the machine, with the total for the last 90 days. **Export CSV** for the full list.
 

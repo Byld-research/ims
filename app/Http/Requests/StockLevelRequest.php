@@ -48,7 +48,7 @@ class StockLevelRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'rows.*.bin_qty.required_if_accepted' => __('A kanban item needs the quantity per bin.'),
+            'rows.*.bin_qty.required_if_accepted' => __('A two-bin item needs the quantity per bin.'),
             'rows.*.bin_qty.gt' => __('The quantity per bin must be greater than zero.'),
             'rows.*.min_level.min' => __('The minimum level cannot be negative.'),
         ];

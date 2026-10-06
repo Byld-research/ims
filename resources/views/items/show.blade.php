@@ -39,7 +39,7 @@
                                 <th class="num">{{ __('Value') }}</th>
                                 <th class="num">{{ __('On order') }}</th>
                                 <th class="num">{{ __('Min level') }}</th>
-                                <th>{{ __('Bin') }}</th>
+                                <th>{{ __('Location') }}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -54,7 +54,7 @@
                                     <td class="num text-indigo-700">{{ isset($onOrder[$site->id]) ? \App\Support\Format::qty($onOrder[$site->id]) : '—' }}</td>
                                     <td class="num">
                                         @if ($stock?->is_kanban)
-                                            {{ __('kanban, bin :q', ['q' => \App\Support\Format::qty($stock->bin_qty)]) }}
+                                            {{ __('two-bin, :q per bin', ['q' => \App\Support\Format::qty($stock->bin_qty)]) }}
                                         @else
                                             {{ $stock && bccomp($stock->min_level, '0', 3) > 0 ? \App\Support\Format::qty($stock->min_level) : '—' }}
                                         @endif

@@ -35,7 +35,7 @@ It covers spare parts, wear parts, consumables and tools for the production mach
 
 | Role | Who | Can do |
 |---|---|---|
-| **Operator** | Machine operators, technicians | Read stock, items, kanban, purchase orders and machines at both sites. Cannot change anything. |
+| **Operator** | Machine operators, technicians | Read inventory, items, two-bin items, purchase orders and machines at both sites. Cannot change anything. |
 | **Manager** | Site manager (one per site) | Everything at **their own site**: issue stock, receive goods, adjust, count, set minimum levels, raise purchase orders, receive transfers from the other site. Maintain items, categories, suppliers and parts lists. **Read** the other site. |
 | **Administrator** | System owner | Everything at every site, plus users, sites, reason codes, machine register and the audit log. |
 
@@ -54,8 +54,8 @@ Managers can see the other site's stock on purpose: before ordering, check wheth
 | **Revision** | Design version of a machine | Truss Saw **2.0** |
 | **Parts list** | Items used on a machine type; a line can be limited to one revision | |
 | **Minimum level** | Below this quantity the item is flagged at that site | 2 pc |
-| **Kanban** | Two-bin method for cheap, regularly used items: reorder when one bin is empty | bin of 6 filters |
-| **Bin** | Free-text shelf reference | CO-SP01 |
+| **Two-bin item** | Cheap, regularly used item kept in two bins: when the first bin is empty, reorder; the second covers the delivery time (also called two-bin kanban) | air filters, 6 per bin |
+| **Location** | Where an item is stored at a site, free text | shelf CO-SP01 |
 | **Average cost** | Moving average purchase price per item and site, USD, excluding freight and duty | $412.00 |
 
 Machine types in use: **A** Wall Machine 6" · **B** Strapping & Header Machine · **C** Truss Saw · **D** Wall Machine 3.5" · **H** Header Machine · **S** Strapping Machine · **T** Truss JIG · **W** Wall JIG.
@@ -72,7 +72,7 @@ The site manager decides; there is no central approval and no routing through Kr
 
 ```mermaid
 flowchart TD
-    A[Operator notices a part running low<br/>and tells the site manager] --> B{Manager checks the<br/>dashboard / stock list}
+    A[Operator notices a part running low<br/>and tells the site manager] --> B{Manager checks the<br/>dashboard / inventory}
     B -->|Enough stock after all| Z[Nothing to do]
     B -->|Short| C{Does the other site<br/>have it?}
     C -->|Yes| D[Other site ships it]
@@ -157,14 +157,14 @@ If the sending site has recorded less than what arrived, the transfer is refused
 
 ```mermaid
 flowchart LR
-    A[New count<br/>for the site] --> B[Add items: due for counting,<br/>category, class, kanban, single item]
+    A[New stock count<br/>for the site] --> B[Add items: due for counting,<br/>category, class, two-bin, single item]
     B --> C[Start counting]
-    C --> D[Count shelf by shelf<br/>sheet sorted by bin,<br/>expected quantity hidden]
+    C --> D[Count shelf by shelf<br/>sheet sorted by location,<br/>expected quantity hidden]
     D --> E[Review: counted vs.<br/>stock <i>now</i>]
     E --> F[Post: one COUNT adjustment<br/>per difference]
 ```
 
-- Suggested frequency: class **A monthly**, class **B and C quarterly**, **kanban quarterly**. The dashboard shows how many items are due.
+- Suggested frequency: class **A monthly**, class **B and C quarterly**, **two-bin items quarterly**. The dashboard shows how many items are due.
 - Lines left blank are skipped. A posted count cannot be changed.
 
 Details: [Stock counts](docs/user-guide/07-stock-counts.md).
@@ -173,8 +173,8 @@ Details: [Stock counts](docs/user-guide/07-stock-counts.md).
 
 | What | Where | When |
 |---|---|---|
-| Status tiles (out of stock, below minimum, kanban refills, orders to chase, counts due); shortages worst first with level bars and 12-week usage; the most used items of the last 30 days, flagging fast movers without a minimum | Dashboard | Always current |
-| Below minimum, kanban refills, late orders, unconfirmed orders | Daily email digest | Once a day at the site's digest hour (default 07:00 local), **only when something needs attention**, only to users who switched it on |
+| Status tiles (out of stock, below minimum, two-bin refills, orders to chase, counts due); shortages worst first with level bars and 12-week usage; the most used items of the last 30 days, flagging fast movers without a minimum | Dashboard | Always current |
+| Below minimum, two-bin refills, late orders, unconfirmed orders | Daily email digest | Once a day at the site's digest hour (default 07:00 local), **only when something needs attention**, only to users who switched it on |
 | Same, all sites in one message | Administrators' digest | Default 07:00 New York time |
 
 ### 7. Go-live
@@ -183,7 +183,7 @@ Details: [Stock counts](docs/user-guide/07-stock-counts.md).
 flowchart TD
     A[Agree SKU numbering scheme] --> B[Load the catalogue:<br/>items, categories, suppliers]
     B --> C[Import parts lists per machine type<br/>starting with C · Truss Saw]
-    C --> D[Set minimum levels and bins per site]
+    C --> D[Set minimum levels and locations per site]
     D --> E[Opening stock count:<br/>adjustment, reason <b>Opening balance</b>,<br/>with the last known price]
     E --> F[Create users, switch on the digest]
     F --> G[Production server: backups,<br/>restore test, email]
@@ -199,9 +199,9 @@ Checklist with owners: [Go-live](docs/user-guide/10-go-live.md).
 | Chapter | For |
 |---|---|
 | [1. Getting started](docs/user-guide/01-getting-started.md): login, menu, site, dashboard, profile | everyone |
-| [2. Stock list and items](docs/user-guide/02-stock-and-items.md): finding stock, item pages, creating items | everyone; editing: managers |
+| [2. Inventory and items](docs/user-guide/02-stock-and-items.md): finding stock, item pages, creating items | everyone; editing: managers |
 | [3. Machines and parts lists](docs/user-guide/03-machines-and-parts-lists.md): register, revisions, CSV import | everyone; editing: managers, administrators |
-| [4. Minimum levels, bins and kanban](docs/user-guide/04-levels-bins-kanban.md) | managers |
+| [4. Min levels, locations and two-bin items](docs/user-guide/04-min-levels-locations-two-bin.md) | managers |
 | [5. Issuing, transfers and adjustments](docs/user-guide/05-issuing-transfers-adjustments.md) | managers |
 | [6. Purchasing](docs/user-guide/06-purchasing.md): orders, receiving, suppliers | managers; reading: everyone |
 | [7. Stock counts](docs/user-guide/07-stock-counts.md): opening count and cycle counts | managers |

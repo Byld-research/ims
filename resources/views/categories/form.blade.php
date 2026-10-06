@@ -20,7 +20,7 @@
                 <x-checkbox name="is_structural" :label="__('Grouping only, no items')" :checked="$category->is_structural" />
             </x-field>
 
-            <x-field name="default_bin" :label="__('Default bin')" :hint="__('Prefills the shelf reference for new items in this category.')">
+            <x-field name="default_bin" :label="__('Default location')" :hint="__('Prefills the shelf location when an item of this category is first stocked at a site.')">
                 <x-input name="default_bin" :value="$category->default_bin" maxlength="40" />
             </x-field>
 

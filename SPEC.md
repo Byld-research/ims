@@ -55,6 +55,10 @@ These terms are used with exactly one meaning throughout the specification, the 
 | Revision (`revision`) | rewizja | The design version of a machine, in the form `major.minor`. | 2.0 |
 | Machine name (`machines.name`) | nazwa własna | The machine's proper name. It may differ between revisions and variants of the same type. Displayed with the revision appended. | Truss Saw 2.0 |
 | Parts list (`machine_type_items`) | lista części | The items used on a machine type. A line applies to every revision of the type unless it is limited to one. | |
+| Inventory | stan magazynu | The list of items with their quantities on hand at each site (screen 3). | |
+| Two-bin item (`stocks.is_kanban`) | pozycja w systemie dwóch pojemników | A cheap, regularly used item kept in two bins: when the first is empty, it is reordered while the second covers the delivery time. Called *kanban* in earlier documents; the interface says *two-bin*. | air filters, 6 per bin |
+| Location (`stocks.bin`) | miejsce składowania | Where an item is stored at a site, free text. The interface says *location*; *bin* is used only for the two-bin container. | shelf CO-SP01 |
+| Stock count | inwentaryzacja cykliczna | Counting part of the stock and correcting the records (5.6). | SC-2026-0003 |
 
 **Machine types**
 
@@ -614,18 +618,18 @@ A site selector sits in the header. It defaults to the user's own site, is switc
 |---|---|---|---|
 | 1 | `/login` | Login | public |
 | 2 | `/` | Dashboard | all |
-| 3 | `/stock` | Stock list: filter by category, criticality, below-minimum, kanban; search by SKU and name; CSV export | all |
+| 3 | `/stock` | Inventory: filter by category, criticality, below-minimum, two-bin; search by SKU and name; CSV export | all |
 | 4 | `/items/{item}` | Item detail: master data, stock and average cost at every site, movement history, suppliers, machine types using it | all |
 | 5 | `/items/create`, `/items/{item}/edit` | Item form | manager, admin |
-| 6 | `/stock/levels` | Bulk editor for min level, bin, kanban flag and bin quantity at the selected site | manager, admin |
+| 6 | `/stock/levels` | Min levels & locations: bulk editor for min level, location, two-bin flag and quantity per bin at the selected site | manager, admin |
 | 7 | `/purchase-orders` | Order list filtered by status and supplier | all; operators read-only |
 | 8 | `/purchase-orders/{po}` | Order detail: lines, status transitions, ETA, tracking, receive action | all; actions manager, admin |
 | 9 | `/purchase-orders/{po}/receive` | Receive goods: one row per open line, quantity defaulting to the outstanding amount | manager, admin |
 | 10 | `/issues/create` | Issue stock: two modes — to a machine, general | manager, admin |
 | 10a | `/transfers/create` | Transfer in from another site, entered by the receiving manager on arrival | manager, admin |
 | 11 | `/adjustments/create` | Adjustment with reason code | manager, admin |
-| 12 | `/stock-counts`, `/stock-counts/{count}` | Count list, count sheet, posting | manager, admin |
-| 13 | `/kanban` | Kanban view for the selected site | all |
+| 12 | `/stock-counts`, `/stock-counts/{count}` | Stock counts: count list, count sheet, posting | manager, admin |
+| 13 | `/two-bin` | Two-bin items at the selected site (the old `/kanban` address redirects) | all |
 | 14 | `/machines`, `/machines/{machine}` | Machine register for the selected site; machine detail with the parts list for its revision, stock at its site, and consumption history | all; editing admin |
 | 15 | `/machine-types`, `/machine-types/{type}` | Machine types and their parts lists | manager, admin |
 | 16 | `/suppliers`, `/suppliers/{supplier}` | Suppliers and supplier items | manager, admin |
@@ -860,6 +864,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.7 | 2026-10-06 | Interface names: Inventory, Two-bin items (was Kanban), Stock counts, Min levels & locations; shelf *bin* shown as *Location*; terms added to 1a; database names unchanged |
 | 1.6 | 2026-10-05 | Operations section 9a (scheduler, backups with restore test, nightly integrity check, sessions, passwords, HTTPS); administrators' digest hour; audited entities listed; digest at most once per day |
 | 1.5 | 2026-10-05 | Counts: add lines by "due for counting"; lines change only in DRAFT; blind count sheet sorted by bin; unit cost asked for found items without a cost; posting locked against double posts |
 | 1.4 | 2026-10-05 | Concurrency details in 5.2.4 (lock before insert, READ COMMITTED, retry); `ims:verify-stock` |

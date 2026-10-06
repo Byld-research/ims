@@ -166,5 +166,5 @@ test('the list shows how many items are due and exports CSV; the sheet exports f
     $this->get(route('stock-counts.index'))->assertSee('2 items are due for counting')->assertSee($count->reference);
     expect($this->get(route('stock-counts.index', ['export' => 'csv']))->streamedContent())->toContain($count->reference)
         ->and($this->get(route('stock-counts.show', [$count, 'export' => 'csv']))->streamedContent())
-        ->toContain('Reference,Bin,SKU,Name,UoM,Counted,Note')->toContain('CO-A1,CS-30001');
+        ->toContain('Reference,Location,SKU,Name,UoM,Counted,Note')->toContain('CO-A1,CS-30001');
 });

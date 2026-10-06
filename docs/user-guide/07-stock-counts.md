@@ -12,13 +12,13 @@ Before go-live, every item on the shelves is counted once and entered as an **ad
 
 An opening balance also counts as the item's first physical count, so items do not show as *due for counting* on day one.
 
-Set minimum levels and bins (chapter 4) before or right after the opening count.
+Set minimum levels and locations (chapter 4) before or right after the opening count.
 
 ## Cycle counts
 
-Counting a portion of the stock regularly keeps the records right. **Stock → Counts** (managers and administrators).
+Counting a portion of the stock regularly keeps the records right (cycle counting). **Stock → Stock counts** (managers and administrators).
 
-**Suggested frequency**: class **A monthly**; class **B**, **C** and **kanban** items **quarterly**. The dashboard and the count list show how many items are due.
+**Suggested frequency**: class **A monthly**; class **B**, **C** and **two-bin** items **quarterly**. The dashboard and the count list show how many items are due.
 
 ### 1. Create the count
 
@@ -26,13 +26,13 @@ Counting a portion of the stock regularly keeps the records right. **Stock → C
 
 ### 2. Add items
 
-**Add by**: *Due for counting* (the suggested set), a category, a criticality class, *Kanban items*, or a single item. Repeat to combine. Items can be added or removed only before counting starts.
+**Add by**: *Due for counting* (the suggested set), a category, a criticality class, *Two-bin items*, or a single item. Repeat to combine. Items can be added or removed only before counting starts.
 
 ### 3. Count
 
-**Start counting**. The count sheet is sorted **by bin**, so you walk the shelves in order. The expected quantity is hidden unless you tick **Show expected quantities**: count what is there, don't confirm what the system says.
+**Start counting**. The count sheet is sorted **by location**, so you walk the shelves in order. The expected quantity is hidden unless you tick **Show expected quantities**: count what is there, don't confirm what the system says.
 
-![Count sheet sorted by bin](images/count-sheet.png)
+![Count sheet sorted by location](images/count-sheet.png)
 
 - Enter **0** for an empty shelf; leave a line **empty** if you did not count it.
 - **Save counts** as often as you like; **Export CSV** prints a sheet to take to the shelves.

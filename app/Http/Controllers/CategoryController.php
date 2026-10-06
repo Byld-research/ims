@@ -18,7 +18,7 @@ class CategoryController extends Controller
         Gate::authorize('viewAny', Category::class);
 
         if (CsvExport::requested($request)) {
-            return CsvExport::download('categories', ['Group', 'Category', 'Structural', 'Default bin', 'Items'],
+            return CsvExport::download('categories', ['Group', 'Category', 'Structural', 'Default location', 'Items'],
                 Category::query()->with('parent')->withCount('items')->orderByRaw('COALESCE(parent_id, id), parent_id IS NOT NULL, name')->get()
                     ->map(fn (Category $c) => [$c->parent?->name ?? $c->name, $c->parent ? $c->name : '', $c->is_structural, $c->default_bin, $c->items_count]));
         }

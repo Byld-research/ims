@@ -38,7 +38,7 @@
                             <option value="due">{{ __('Due for counting (:n)', ['n' => $dueCount]) }}</option>
                             <option value="category">{{ __('Category') }}</option>
                             <option value="criticality">{{ __('Criticality class') }}</option>
-                            <option value="kanban">{{ __('Kanban items') }}</option>
+                            <option value="kanban">{{ __('Two-bin items') }}</option>
                             <option value="item">{{ __('Single item') }}</option>
                         </select>
                     </div>
@@ -64,7 +64,7 @@
                             <x-item-picker name="item_id" />
                         </div>
                         <p x-show="by === 'due'" class="text-sm text-gray-500">{{ __('Items whose last count is older than the suggested frequency, or never counted.') }}</p>
-                        <p x-show="by === 'kanban'" x-cloak class="text-sm text-gray-500">{{ __('Every kanban item at this site.') }}</p>
+                        <p x-show="by === 'kanban'" x-cloak class="text-sm text-gray-500">{{ __('Every two-bin item at this site.') }}</p>
                         <x-input-error class="mt-1" :messages="$errors->get('item_id')" />
                     </div>
                     <div class="sm:col-span-2">
@@ -91,7 +91,7 @@
                 </div>
 
                 @if ($count->status === S::Counting)
-                    <p class="px-4 sm:px-6 pb-2 text-sm text-gray-500">{{ __('Sorted by bin. Enter what is on the shelf, 0 if it is empty; leave a line blank if it was not counted.') }}</p>
+                    <p class="px-4 sm:px-6 pb-2 text-sm text-gray-500">{{ __('Sorted by location. Enter what is on the shelf, 0 if it is empty; leave a line blank if it was not counted.') }}</p>
                 @endif
                 @error('lines.*')
                     <p class="px-4 sm:px-6 pb-2 text-sm text-red-600">{{ $message }}</p>
@@ -101,7 +101,7 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>{{ __('Bin') }}</th>
+                                <th>{{ __('Location') }}</th>
                                 <th>{{ __('Item') }}</th>
                                 @if ($count->status === S::Counting)
                                     <th class="num" x-show="showExpected" x-cloak>{{ __('Expected') }}</th>

@@ -20,14 +20,14 @@ return [
         ['label' => 'Dashboard', 'route' => 'dashboard', 'active' => ['dashboard']],
 
         ['label' => 'Stock', 'links' => [
-            ['label' => 'Stock list', 'route' => 'stock.index', 'active' => ['stock.index', 'items.*'],
-                'description' => 'Quantities, levels and value per site'],
-            ['label' => 'Kanban', 'route' => 'kanban.index', 'active' => ['kanban.*'],
-                'description' => 'Two-bin items, refills first'],
-            ['label' => 'Counts', 'route' => 'stock-counts.index', 'active' => ['stock-counts.*'],
-                'can' => 'viewAny', 'model' => StockCount::class, 'description' => 'Cycle counts and items due'],
-            ['label' => 'Min levels & bins', 'route' => 'stock.levels', 'active' => ['stock.levels*'],
-                'can' => 'set-levels', 'description' => 'Minimums, shelves and kanban per site'],
+            ['label' => 'Inventory', 'route' => 'stock.index', 'active' => ['stock.index', 'items.*'],
+                'description' => 'Stock on hand per site: quantities, levels, value'],
+            ['label' => 'Two-bin items', 'route' => 'kanban.index', 'active' => ['kanban.*'],
+                'description' => 'Consumables kept in two bins; refills first'],
+            ['label' => 'Stock counts', 'route' => 'stock-counts.index', 'active' => ['stock-counts.*'],
+                'can' => 'viewAny', 'model' => StockCount::class, 'description' => 'Cycle counting and items due'],
+            ['label' => 'Min levels & locations', 'route' => 'stock.levels', 'active' => ['stock.levels*'],
+                'can' => 'set-levels', 'description' => 'Minimum levels, shelf locations, two-bin settings'],
             ['label' => 'Categories', 'route' => 'categories.index', 'active' => ['categories.*']],
         ]],
 

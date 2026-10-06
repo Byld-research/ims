@@ -40,7 +40,9 @@ Route::middleware('auth')->group(function () {
     // Catalogue
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
     Route::get('/stock/lookup', StockLookupController::class)->name('stock.lookup');
-    Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban.index');
+    Route::get('/two-bin', [KanbanController::class, 'index'])->name('kanban.index');
+    // Old address of the two-bin list, kept for bookmarks. GET only: writes have no business here.
+    Route::get('/kanban', fn () => redirect('/two-bin', 301));
     Route::get('/stock/levels', [StockLevelController::class, 'edit'])->name('stock.levels');
     Route::put('/stock/levels', [StockLevelController::class, 'update'])->name('stock.levels.update');
     Route::get('/issues/create', [IssueController::class, 'create'])->name('issues.create');

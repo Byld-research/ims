@@ -89,7 +89,7 @@
                 <span class="text-gray-500">→</span>
                 <span class="font-semibold tabular-nums" :class="after() < 0 ? 'text-red-600' : 'text-gray-900'" x-text="format(after())"></span>
                 <span x-text="stock?.item.uom"></span>
-                <span x-show="stock?.bin" class="ms-2 text-gray-500">· {{ __('bin') }} <span x-text="stock?.bin"></span></span>
+                <span x-show="stock?.bin" class="ms-2 text-gray-500">· {{ __('location') }} <span x-text="stock?.bin"></span></span>
                 <span x-show="after() < 0" class="ms-2 text-red-600">{{ __('Not enough stock.') }}</span>
             </div>
 

@@ -20,7 +20,7 @@ Open the address your administrator gave you and log in with your email and pass
 | Part | What it is |
 |---|---|
 | **Dashboard** | Alerts and key figures for your site. Start here every day. |
-| **Stock ▾** | Stock list, kanban, counts, minimum levels and bins, categories |
+| **Stock ▾** | Inventory, two-bin items, stock counts, min levels & locations, categories |
 | **Purchasing ▾** | Purchase orders, suppliers |
 | **Machines ▾** | Machines at your site, machine types with parts lists |
 | **Admin ▾** | Administrators only: users, sites, reason codes, audit log |
@@ -36,7 +36,7 @@ On a phone, the menu is behind the ☰ icon; the Issue button stays visible next
 
 ## Your site and the other site
 
-Everything you record happens at the site in the header. You can still **read** the other site: the stock list shows a column per site, and every item page shows stock at both sites. Use this before ordering: the other site may have the part.
+Everything you record happens at the site in the header. You can still **read** the other site: the inventory shows a column per site, and every item page shows stock at both sites. Use this before ordering: the other site may have the part.
 
 ## Dates and numbers
 

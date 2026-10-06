@@ -90,7 +90,7 @@ class StockController extends Controller
             $headings[] = $each->code.' qty';
         }
         if ($site) {
-            array_push($headings, $site->code.' min level', $site->code.' bin', $site->code.' kanban',
+            array_push($headings, $site->code.' min level', $site->code.' location', $site->code.' two-bin',
                 $site->code.' qty per bin', $site->code.' avg cost', $site->code.' value', $site->code.' needs replenishment');
         }
 

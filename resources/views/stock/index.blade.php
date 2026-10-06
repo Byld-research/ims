@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :title="__('Stock')" :subtitle="$site ? __('Quantities at every site; levels and value at :site.', ['site' => $site->code]) : __('Quantities at every site.')">
+        <x-page-header :title="__('Inventory')" :subtitle="$site ? __('Quantities at every site; levels and value at :site.', ['site' => $site->code]) : __('Quantities at every site.')">
             <x-export-link />
             @can('create', App\Models\Item::class)
                 <a href="{{ route('items.create') }}" class="btn-primary">{{ __('New item') }}</a>
@@ -24,7 +24,7 @@
             </div>
             <div class="space-y-1 text-sm text-gray-700">
                 <label class="flex items-center gap-1.5"><input type="checkbox" name="below" value="1" @checked($filters['below'] ?? false) class="form-checkbox"> {{ __('Needs replenishment') }}</label>
-                <label class="flex items-center gap-1.5"><input type="checkbox" name="kanban" value="1" @checked($filters['kanban'] ?? false) class="form-checkbox"> {{ __('Kanban only') }}</label>
+                <label class="flex items-center gap-1.5"><input type="checkbox" name="kanban" value="1" @checked($filters['kanban'] ?? false) class="form-checkbox"> {{ __('Two-bin only') }}</label>
                 <label class="flex items-center gap-1.5"><input type="checkbox" name="inactive" value="1" @checked($filters['inactive'] ?? false) class="form-checkbox"> {{ __('Include inactive') }}</label>
             </div>
             <div class="sm:col-span-6 flex justify-end">
@@ -45,7 +45,7 @@
                         <th>{{ __('Unit') }}</th>
                         @if ($site)
                             <th class="num">{{ __('Min') }}</th>
-                            <th>{{ __('Bin') }}</th>
+                            <th>{{ __('Location') }}</th>
                             <th class="num">{{ __('Value') }}</th>
                             <th>{{ __('Status') }}</th>
                         @endif
@@ -81,7 +81,7 @@
                             @if ($site)
                                 <td class="num text-gray-600">
                                     @if ($here?->is_kanban)
-                                        <span title="{{ __('Kanban: alert at one bin or less') }}">{{ __('bin') }} {{ \App\Support\Format::qty($here->bin_qty) }}</span>
+                                        <span title="{{ __('Two-bin item: alert at one bin or less') }}">{{ __('bin') }} {{ \App\Support\Format::qty($here->bin_qty) }}</span>
                                     @elseif ($here && bccomp($here->min_level, '0', 3) > 0)
                                         {{ \App\Support\Format::qty($here->min_level) }}
                                     @else

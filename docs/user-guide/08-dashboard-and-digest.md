@@ -18,7 +18,7 @@ Five tiles across the top. A tile with something to do is coloured, with an icon
 |---|---|---|
 | **Out of stock** | ✕ red | items with a minimum and nothing left |
 | **Below minimum** | ▲ orange | items under their minimum |
-| **Kanban refill** | ● amber | kanban items at one bin or less |
+| **Two-bin refill** | ● amber | two-bin items at one bin or less |
 | **Orders to chase** | ▲ orange | orders past their ETA, unconfirmed, or partly received for over 30 days |
 | **Due for counting** | ● amber | items due by the suggested count frequency |
 
@@ -29,7 +29,7 @@ Colour is never the only signal: every state also has its own icon shape and a w
 Every item that needs replenishment, **worst first**: out of stock, then class A, then the item with the least left compared to its minimum. Each row shows:
 
 - a coloured stripe and a status (**Out**, **Low · A**, **Low**, **Refill**);
-- a **level bar**: the fill is the stock, the black mark is the minimum (or one kanban bin);
+- a **level bar**: the fill is the stock, the black mark is the minimum (or one bin of a two-bin item);
 - what is already **on order**;
 - **used, 12 weeks**: a small line of weekly usage, the current week as a blue dot. A flat line or *not used* means the item is not moving; a busy line means it needs watching.
 
@@ -59,7 +59,7 @@ Operators see the same dashboard for their site, without action links:
 
 ## Daily digest by email
 
-One email a day with what needs attention: items below minimum, kanban refills, orders past their ETA, orders never confirmed.
+One email a day with what needs attention: items below minimum, two-bin refills, orders past their ETA, orders never confirmed.
 
 - Sent at the site's **digest hour** (default 07:00 local time), set by an administrator per site.
 - **Only when something needs attention.** No email means nothing to report.

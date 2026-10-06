@@ -93,7 +93,7 @@ class StockCountController extends Controller
         $lines = $lines->sortBy(fn (StockCountLine $l) => [($stocks->get($l->item_id)?->bin ?? "\u{FFFF}"), $l->item->sku])->values();
 
         if (CsvExport::requested($request)) {
-            return CsvExport::download('count-sheet-'.strtolower($stockCount->reference), ['Reference', 'Bin', 'SKU', 'Name', 'UoM', 'Counted', 'Note'],
+            return CsvExport::download('count-sheet-'.strtolower($stockCount->reference), ['Reference', 'Location', 'SKU', 'Name', 'UoM', 'Counted', 'Note'],
                 $lines->map(fn (StockCountLine $l) => [$stockCount->reference, $stocks->get($l->item_id)?->bin, $l->item->sku, $l->item->name,
                     $l->item->uom, $l->qty_counted, $l->note]));
         }

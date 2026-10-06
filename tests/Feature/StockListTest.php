@@ -112,7 +112,7 @@ test('the CSV export carries levels and value at the selected site', function ()
 
     $csv = $this->actingAs($this->user)->get(route('stock.index', ['export' => 'csv']))->streamedContent();
 
-    expect($csv)->toContain('"BPC002 min level","BPC002 bin"')
+    expect($csv)->toContain('"BPC002 min level","BPC002 location"')
         ->toContain('SP-9')
         ->toContain('5.000,GA-1,no,,2.5000,10.0000,yes');
 });

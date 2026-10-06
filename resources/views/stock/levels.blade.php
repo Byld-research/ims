@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :title="__('Min levels and bins · :site', ['site' => $site->code])"
-                       :subtitle="__('A min level of 0 turns the alert off. Kanban items alert at one bin or less and ignore the min level.')">
-            <a href="{{ route('stock.index') }}" class="btn-secondary btn-sm">{{ __('Back to stock') }}</a>
+        <x-page-header :title="__('Min levels & locations · :site', ['site' => $site->code])"
+                       :subtitle="__('A min level of 0 turns the alert off. Two-bin items alert at one bin or less and ignore the min level.')">
+            <a href="{{ route('stock.index') }}" class="btn-secondary btn-sm">{{ __('Back to inventory') }}</a>
         </x-page-header>
     </x-slot>
 
@@ -19,7 +19,7 @@
             </div>
             <div class="space-y-1 text-sm text-gray-700">
                 <label class="flex items-center gap-1.5"><input type="checkbox" name="unset" value="1" @checked($filters['unset'] ?? false) class="form-checkbox"> {{ __('No level set') }}</label>
-                <label class="flex items-center gap-1.5"><input type="checkbox" name="kanban" value="1" @checked($filters['kanban'] ?? false) class="form-checkbox"> {{ __('Kanban only') }}</label>
+                <label class="flex items-center gap-1.5"><input type="checkbox" name="kanban" value="1" @checked($filters['kanban'] ?? false) class="form-checkbox"> {{ __('Two-bin only') }}</label>
             </div>
             <button class="btn-primary btn-sm">{{ __('Filter') }}</button>
         </form>
@@ -46,8 +46,8 @@
                             <th>{{ __('Item') }}</th>
                             <th class="num">{{ __('In stock') }}</th>
                             <th class="num">{{ __('Min level') }}</th>
-                            <th>{{ __('Bin') }}</th>
-                            <th>{{ __('Kanban') }}</th>
+                            <th>{{ __('Location') }}</th>
+                            <th>{{ __('Two-bin') }}</th>
                             <th class="num">{{ __('Qty per bin') }}</th>
                         </tr>
                     </thead>
@@ -72,13 +72,13 @@
                                            class="form-input w-24 text-right @error("{$key}.min_level") border-red-500 @enderror">
                                 </td>
                                 <td>
-                                    <input name="rows[{{ $item->id }}][bin]" maxlength="40" aria-label="{{ __('Bin for :sku', ['sku' => $item->sku]) }}"
+                                    <input name="rows[{{ $item->id }}][bin]" maxlength="40" aria-label="{{ __('Location of :sku', ['sku' => $item->sku]) }}"
                                            value="{{ old("{$key}.bin", $stock?->bin) }}" class="form-input w-32">
                                 </td>
                                 <td>
                                     <input type="hidden" name="rows[{{ $item->id }}][is_kanban]" value="0">
                                     <input type="checkbox" name="rows[{{ $item->id }}][is_kanban]" value="1" x-model="kanban"
-                                           aria-label="{{ __('Kanban for :sku', ['sku' => $item->sku]) }}" class="form-checkbox">
+                                           aria-label="{{ __('Two-bin for :sku', ['sku' => $item->sku]) }}" class="form-checkbox">
                                 </td>
                                 <td class="num">
                                     <input name="rows[{{ $item->id }}][bin_qty]" inputmode="decimal" aria-label="{{ __('Quantity per bin for :sku', ['sku' => $item->sku]) }}"

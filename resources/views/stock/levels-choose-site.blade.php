@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :title="__('Min levels and bins')" />
+        <x-page-header :title="__('Min levels & locations')" />
     </x-slot>
 
     <x-page>

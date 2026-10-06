@@ -79,7 +79,7 @@ test('the editor lists items with their current settings at the site', function 
     $this->actingAs($this->manager)
         ->get(route('stock.levels'))
         ->assertOk()
-        ->assertSee('Min levels and bins · BPC002')
+        ->assertSee('Min levels &amp; locations · BPC002', false)
         ->assertSee('CO-A1')
         ->assertDontSee('GA-Z9');
 });

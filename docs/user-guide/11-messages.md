@@ -33,7 +33,7 @@ The system refuses anything that would make the records wrong, and says why. The
 | Message | Why | What to do |
 |---|---|---|
 | *Add at least one item before counting.* | The count is empty. | Add items, then start counting. |
-| *Lines can be added only while the count is a draft.* | Counting already started. | Create a second count for the extra items. |
+| *Lines can be added only while the count is a draft.* | Counting already started. | Create a second stock count for the extra items. |
 | *Only a count in progress can be posted. This one is posted.* | Someone already posted it. | Nothing to do; open the count to see the result. |
 | *SP-10005: Enter a unit cost: …* | A found item has no cost at this site yet. | Enter its unit cost on the review screen. |
 

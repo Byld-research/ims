@@ -33,7 +33,7 @@ test('the kanban view lists refills first, then by bins left, and exports CSV', 
         ->assertDontSee('NOT-KANBAN');
 
     expect($this->get(route('kanban.index', ['export' => 'csv']))->streamedContent())
-        ->toContain('Site,SKU,Name,UoM,Bin,"Qty per bin","In stock","Bins left","Needs refill","On order"')
+        ->toContain('Site,SKU,Name,UoM,Location,"Qty per bin","In stock","Bins left","Needs refill","On order"')
         ->toContain('KB-REFILL');
 });
 
@@ -41,7 +41,10 @@ test('the menu groups links into sections and shows the Issue button to managers
     $this->actingAs($this->manager)->get(route('stock.index'))
         ->assertOk()
         ->assertSeeInOrder(['Dashboard', 'Stock', 'Purchasing', 'Machines'])
-        ->assertSee('Min levels &amp; bins', false)
+        ->assertSee('Inventory')
+        ->assertSee('Two-bin items')
+        ->assertSee('Stock counts')
+        ->assertSee('Min levels &amp; locations', false)
         ->assertSee('Machine types')
         ->assertSee('Suppliers')
         ->assertSee('Transfer in')
@@ -51,8 +54,8 @@ test('the menu groups links into sections and shows the Issue button to managers
 test('operators see only what they may open and no Issue button', function () {
     $this->actingAs(User::factory()->operator($this->colorado)->create())->get(route('stock.index'))
         ->assertOk()
-        ->assertSee('Kanban')
-        ->assertDontSee('Min levels &amp; bins', false)
+        ->assertSee('Two-bin items')
+        ->assertDontSee('Min levels &amp; locations', false)
         ->assertDontSee('Machine types')
         ->assertDontSee('Suppliers')
         ->assertDontSee(route('issues.create'))
@@ -65,7 +68,7 @@ test('a section is marked current on any of its pages', function () {
     $response = $this->actingAs($this->manager)->get(route('items.show', $item))->assertOk();
 
     expect(substr_count($response->getContent(), 'aria-current="page"'))->toBeGreaterThanOrEqual(1)
-        ->and($response->getContent())->toMatch('/aria-current="page"\s*>\s*<span[^>]*>Stock list/');
+        ->and($response->getContent())->toMatch('/aria-current="page"\s*>\s*<span[^>]*>Inventory/');
 });
 
 test('category, item history and machine consumption lists export CSV', function () {
@@ -80,4 +83,9 @@ test('category, item history and machine consumption lists export CSV', function
         ->toContain('ADJUSTMENT')->toContain('ISSUE_MACHINE')->toContain('004C')->toContain('OPENING')
         ->and($this->get(route('machines.show', [Machine::query()->where('sku', '004C')->sole(), 'export' => 'csv']))->streamedContent())
         ->toContain('blade change')->not->toContain('OPENING');
+});
+
+test('the old kanban address redirects to two-bin items', function () {
+    $this->actingAs($this->manager)->get('/kanban')->assertRedirect('/two-bin');
+    $this->get('/two-bin')->assertOk()->assertSee('Two-bin items');
 });
