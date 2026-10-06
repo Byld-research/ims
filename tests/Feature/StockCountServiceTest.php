@@ -25,8 +25,8 @@ beforeEach(function () {
     $this->stock = app(StockService::class);
     $this->colorado = Site::query()->where('code', 'BPC002')->sole();
     $this->user = User::factory()->manager($this->colorado)->create();
-    $this->blade = Item::factory()->create(['sku' => 'SP-10001', 'uom' => 'pc', 'criticality' => 'A']);
-    $this->filter = Item::factory()->create(['sku' => 'CS-30001', 'uom' => 'pc', 'criticality' => 'C']);
+    $this->blade = Item::factory()->create(['sku' => 'SP-10001', 'uom' => 'pc', 'criticality' => 'HIGH']);
+    $this->filter = Item::factory()->create(['sku' => 'CS-30001', 'uom' => 'pc', 'criticality' => 'LOW']);
     $found = ReasonCode::adjustment('FOUND');
     $this->stock->adjust($this->blade, $this->colorado, true, '4', $found, $this->user, '412');
     $this->stock->adjust($this->filter, $this->colorado, true, '10', $found, $this->user, '41.3');
@@ -175,11 +175,11 @@ test('items due for counting follow the suggested frequencies', function () {
     }
     Stock::query()->where('item_id', $kanban->id)->update(['is_kanban' => true, 'bin_qty' => 2]);
 
-    // Never counted: A, C and kanban are due; unclassified non-kanban has no frequency.
+    // Never counted: high, low and two-bin are due; unclassified non-two-bin has no frequency.
     $due = fn () => Stock::query()->where('stocks.site_id', $this->colorado->id)->dueForCount()->pluck('item_id')->sort()->values()->all();
     expect($due())->toBe(collect([$this->blade->id, $this->filter->id, $kanban->id])->sort()->values()->all());
 
-    // Counted 40 days ago: class A (monthly) is due again, class C and kanban (quarterly) are not.
+    // Counted 40 days ago: high (monthly) is due again, low and two-bin (quarterly) are not.
     Stock::query()->where('site_id', $this->colorado->id)->update(['last_counted_at' => now()->subDays(40)]);
     expect($due())->toBe([$this->blade->id]);
 });

@@ -48,18 +48,18 @@ test('a top-level category filter includes its subcategories', function () {
 });
 
 test('filters by criticality and can include inactive items', function () {
-    Item::factory()->create(['sku' => 'CRIT-A', 'criticality' => 'A']);
-    Item::factory()->create(['sku' => 'CRIT-C', 'criticality' => 'C']);
-    Item::factory()->inactive()->create(['sku' => 'GONE-1', 'criticality' => 'A']);
+    Item::factory()->create(['sku' => 'CRIT-A', 'criticality' => 'HIGH']);
+    Item::factory()->create(['sku' => 'CRIT-C', 'criticality' => 'LOW']);
+    Item::factory()->inactive()->create(['sku' => 'GONE-1', 'criticality' => 'HIGH']);
 
     $this->actingAs($this->user);
-    $this->get(route('stock.index', ['criticality' => 'A']))->assertSee('CRIT-A')->assertDontSee('CRIT-C')->assertDontSee('GONE-1');
-    $this->get(route('stock.index', ['criticality' => 'A', 'inactive' => 1]))->assertSee('GONE-1');
+    $this->get(route('stock.index', ['criticality' => 'HIGH']))->assertSee('CRIT-A')->assertDontSee('CRIT-C')->assertDontSee('GONE-1');
+    $this->get(route('stock.index', ['criticality' => 'HIGH', 'inactive' => 1]))->assertSee('GONE-1');
 });
 
 test('exports the filtered list as CSV', function () {
     Item::factory()->create(['sku' => 'SP-1', 'name' => '=HYPERLINK("x")']);
-    Item::factory()->create(['sku' => 'SP-2', 'criticality' => 'C']);
+    Item::factory()->create(['sku' => 'SP-2', 'criticality' => 'LOW']);
 
     $response = $this->actingAs($this->user)->get(route('stock.index', ['q' => 'SP-1', 'export' => 'csv']));
 
@@ -73,9 +73,9 @@ test('exports the filtered list as CSV', function () {
         ->not->toContain('SP-2');
 });
 
-test('replenishment filter follows SPEC 5.5 at the selected site, class A first', function () {
-    $low = Item::factory()->create(['sku' => 'LOW-C', 'criticality' => 'C']);
-    $lowA = Item::factory()->create(['sku' => 'LOW-A', 'criticality' => 'A']);
+test('replenishment filter follows SPEC 5.5 at the selected site, high criticality first', function () {
+    $low = Item::factory()->create(['sku' => 'LOW-C', 'criticality' => 'LOW']);
+    $lowA = Item::factory()->create(['sku' => 'LOW-A', 'criticality' => 'HIGH']);
     $ok = Item::factory()->create(['sku' => 'OK-1']);
     $noMin = Item::factory()->create(['sku' => 'NOMIN-1']);
     $kanbanAtBin = Item::factory()->create(['sku' => 'KB-AT']);
@@ -115,4 +115,16 @@ test('the CSV export carries levels and value at the selected site', function ()
     expect($csv)->toContain('"BPC002 min level","BPC002 location"')
         ->toContain('SP-9')
         ->toContain('5.000,GA-1,no,,2.5000,10.0000,yes');
+});
+
+test('below-minimum items sort High, Normal, Low, then unset, not alphabetically', function () {
+    $here = $this->user->site_id;
+    foreach (['UNSET' => null, 'LOW-1' => 'LOW', 'NORMAL-1' => 'NORMAL', 'HIGH-1' => 'HIGH'] as $sku => $criticality) {
+        $item = Item::factory()->create(['sku' => $sku, 'criticality' => $criticality]);
+        DB::table('stocks')->insert(['item_id' => $item->id, 'site_id' => $here, 'qty' => 1, 'min_level' => 5]);
+    }
+
+    $this->actingAs($this->user)->get(route('stock.index', ['below' => 1]))
+        ->assertSeeInOrder(['HIGH-1', 'NORMAL-1', 'LOW-1', 'UNSET'])
+        ->assertSee('Below min');
 });

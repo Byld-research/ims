@@ -53,6 +53,7 @@ Managers can see the other site's stock on purpose: before ordering, check wheth
 | **Machine SKU** | Three-digit serial + type letter | 004C |
 | **Revision** | Design version of a machine | Truss Saw **2.0** |
 | **Parts list** | Items used on a machine type; a line can be limited to one revision | |
+| **Criticality** | How badly a missing item hurts: **High** (its failure stops production and it is hard to get), **Normal**, **Low** | High |
 | **Minimum level** | Below this quantity the item is flagged at that site | 2 pc |
 | **Two-bin item** | Cheap, regularly used item kept in two bins: when the first bin is empty, reorder; the second covers the delivery time (also called two-bin kanban) | air filters, 6 per bin |
 | **Location** | Where an item is stored at a site, free text | shelf CO-SP01 |
@@ -164,7 +165,7 @@ flowchart LR
     E --> F[Post: one COUNT adjustment<br/>per difference]
 ```
 
-- Suggested frequency: class **A monthly**, class **B and C quarterly**, **two-bin items quarterly**. The dashboard shows how many items are due.
+- Suggested frequency: **high** criticality **monthly**, **normal and low quarterly**, **two-bin items quarterly**. The dashboard shows how many items are due.
 - Lines left blank are skipped. A posted count cannot be changed.
 
 Details: [Stock counts](docs/user-guide/07-stock-counts.md).

@@ -18,15 +18,15 @@ Set minimum levels and locations (chapter 4) before or right after the opening c
 
 Counting a portion of the stock regularly keeps the records right (cycle counting). **Stock → Stock counts** (managers and administrators).
 
-**Suggested frequency**: class **A monthly**; class **B**, **C** and **two-bin** items **quarterly**. The dashboard and the count list show how many items are due.
+**Suggested frequency**: **high** criticality **monthly**; **normal**, **low** and **two-bin** items **quarterly**. The dashboard and the count list show how many items are due.
 
 ### 1. Create the count
 
-**New count** → scope note, e.g. *Class A monthly*. The reference is assigned: SC-2026-0003.
+**New count** → scope note, e.g. *High criticality monthly*. The reference is assigned: SC-2026-0003.
 
 ### 2. Add items
 
-**Add by**: *Due for counting* (the suggested set), a category, a criticality class, *Two-bin items*, or a single item. Repeat to combine. Items can be added or removed only before counting starts.
+**Add by**: *Due for counting* (the suggested set), a category, a criticality, *Two-bin items*, or a single item. Repeat to combine. Items can be added or removed only before counting starts.
 
 ### 3. Count
 

@@ -51,6 +51,7 @@ These terms are used with exactly one meaning throughout the specification, the 
 | Item SKU (`items.sku`) | SKU pozycji | The unique catalogue number of an item. | SP-10001 |
 | Machine type (`machine_type`) | typ maszyny | A family of machines, identified by a single letter. Holds the parts list. | C · Truss Saw |
 | Machine (`machine`) | maszyna | One physical machine installed at a site. Stock is issued to machines. | 004C |
+| Criticality (`items.criticality`) | krytyczność | How badly a missing item hurts: **High** (its failure stops production and it is hard to get), **Normal**, **Low**. Called class A, B, C in earlier documents. | High |
 | Machine SKU (`machines.sku`) | SKU maszyny | Three-digit serial number followed by the type letter. Unique across all machines ever built, including those not in the register. | 004C |
 | Revision (`revision`) | rewizja | The design version of a machine, in the form `major.minor`. | 2.0 |
 | Machine name (`machines.name`) | nazwa własna | The machine's proper name. It may differ between revisions and variants of the same type. Displayed with the revision appended. | Truss Saw 2.0 |
@@ -218,7 +219,7 @@ The display name is `name` followed by `revision`: *Truss Saw 2.0*.
 | manufacturer | varchar(100) nullable | |
 | mpn | varchar(80) nullable | manufacturer part number |
 | drawing_no | varchar(80) nullable | |
-| criticality | enum A,B,C nullable | drives count frequency and dashboard ordering |
+| criticality | enum HIGH, NORMAL, LOW nullable | drives count frequency and dashboard ordering; shown as High, Normal, Low |
 | is_active | boolean default true | soft deactivation only, never hard delete |
 | timestamps | | |
 
@@ -367,7 +368,7 @@ Cycle counting. A count is created for a site, populated with items, counted, th
 | site_id | FK sites | |
 | reference | varchar(20) unique | SC-2026-0001 |
 | status | enum DRAFT, COUNTING, POSTED, CANCELLED | |
-| scope_note | varchar(255) nullable | e.g. "Class A monthly" |
+| scope_note | varchar(255) nullable | e.g. "High criticality monthly" |
 | created_by | FK users | |
 | posted_by | FK users nullable | |
 | posted_at | timestamp nullable | |
@@ -529,7 +530,7 @@ Quantity on open purchase orders is displayed alongside the shortage but is neve
 
 ### 5.6 Cycle counting
 
-1. A manager creates a count for their site and adds lines, either by selecting a category, by criticality class, by kanban flag, by the items currently due for counting (see the suggested frequency below), or by picking items individually. Lines can be added or removed only while the count is DRAFT.
+1. A manager creates a count for their site and adds lines, either by selecting a category, by criticality, by two-bin flag, by the items currently due for counting (see the suggested frequency below), or by picking items individually. Lines can be added or removed only while the count is DRAFT.
 2. `qty_expected` is snapshotted when the line is added.
 3. Status moves to COUNTING. Counted quantities are entered per line, on a sheet sorted by bin with the expected quantity hidden unless the counter asks for it, so the count is taken rather than confirmed. Counts can be saved repeatedly before posting.
 4. Posting the count creates one ADJUSTMENT transaction for every line where `qty_counted` differs from the stock quantity at the moment of posting, using the reason code `COUNT`. Lines with no difference create no transaction.
@@ -540,7 +541,7 @@ Quantity on open purchase orders is displayed alongside the shortage but is neve
 9. A posted count is immutable. A cancelled count creates no transactions. The count row is locked while posting, so a count cannot be posted twice even by two simultaneous requests.
 10. An ADJUSTMENT with reason `OPENING` also sets `stocks.last_counted_at`, since an opening balance is a physical count. Without this every item would show as due for counting on the first day.
 
-**Suggested count frequency**, surfaced as a due list rather than enforced: class A monthly, class B and C quarterly, kanban items quarterly.
+**Suggested count frequency**, surfaced as a due list rather than enforced: high criticality monthly, normal and low quarterly, two-bin items quarterly.
 
 ### 5.7 Kanban
 
@@ -650,7 +651,7 @@ Scoped to the selected site; administrators may switch to a consolidated view.
 
 **Alert panel, at the top**
 
-- items below minimum, class A first
+- items below minimum, high criticality first
 - kanban items at or below one bin
 - items at zero stock that have a minimum set
 - purchase orders past their ETA with nothing received
@@ -864,6 +865,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.8 | 2026-10-06 | Criticality High, Normal, Low (was A, B, C), stored as HIGH, NORMAL, LOW; stock status *Low* renamed *Below min* to avoid a clash |
 | 1.7 | 2026-10-06 | Interface names: Inventory, Two-bin items (was Kanban), Stock counts, Min levels & locations; shelf *bin* shown as *Location*; terms added to 1a; database names unchanged |
 | 1.6 | 2026-10-05 | Operations section 9a (scheduler, backups with restore test, nightly integrity check, sessions, passwords, HTTPS); administrators' digest hour; audited entities listed; digest at most once per day |
 | 1.5 | 2026-10-05 | Counts: add lines by "due for counting"; lines change only in DRAFT; blind count sheet sorted by bin; unit cost asked for found items without a cost; posting locked against double posts |

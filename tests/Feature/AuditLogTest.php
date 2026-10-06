@@ -18,15 +18,15 @@ beforeEach(function () {
 });
 
 test('master data changes are recorded with before and after, by whom', function () {
-    $item = Item::factory()->create(['name' => 'Saw blade', 'criticality' => 'B']);
+    $item = Item::factory()->create(['name' => 'Saw blade', 'criticality' => 'NORMAL']);
 
-    $item->update(['name' => 'Saw blade 18"', 'criticality' => 'A']);
+    $item->update(['name' => 'Saw blade 18"', 'criticality' => 'HIGH']);
 
     $log = AuditLog::query()->where('entity', 'item')->where('entity_id', $item->id)->where('action', AuditAction::Update)->sole();
     expect($log->user_id)->toBe($this->manager->id)
         ->and($log->changes)->toBe([
             'name' => ['before' => 'Saw blade', 'after' => 'Saw blade 18"'],
-            'criticality' => ['before' => 'B', 'after' => 'A'],
+            'criticality' => ['before' => 'NORMAL', 'after' => 'HIGH'],
         ]);
 });
 

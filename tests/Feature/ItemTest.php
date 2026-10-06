@@ -22,7 +22,7 @@ function itemPayload(array $overrides = []): array
         'name' => 'Linear bearing',
         'category_id' => test()->category->id,
         'uom' => 'pc',
-        'criticality' => 'A',
+        'criticality' => 'HIGH',
         ...$overrides,
     ];
 }
@@ -32,7 +32,7 @@ test('a manager creates an item', function () {
 
     $item = Item::query()->where('sku', 'SP-00001')->sole();
     $response->assertRedirect(route('items.show', $item));
-    expect($item->criticality->value)->toBe('A')->and($item->is_active)->toBeTrue();
+    expect($item->criticality->value)->toBe('HIGH')->and($item->is_active)->toBeTrue();
 });
 
 test('an operator cannot create items', function () {

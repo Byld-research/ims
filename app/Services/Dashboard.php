@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Criticality;
 use App\Enums\PurchaseOrderStatus as PoStatus;
 use App\Enums\TransactionType;
 use App\Models\Category;
@@ -169,7 +170,7 @@ class Dashboard
     }
 
     /**
-     * Every stock row that needs replenishment, worst first: out of stock, then class A,
+     * Every stock row that needs replenishment, worst first: out of stock, then high criticality,
      * then the lowest share of its minimum (or bin) left. Severity follows the status palette.
      *
      * @return array{total: int, rows: Collection<int, array{stock: Stock, severity: string, ratio: float}>}
@@ -183,7 +184,7 @@ class Dashboard
             $severity = match (true) {
                 bccomp($stock->qty, '0', 3) === 0 => 'critical',
                 $stock->is_kanban => 'warning',
-                $stock->item->criticality?->value === 'A' => 'serious',
+                $stock->item->criticality === Criticality::High => 'serious',
                 default => 'warning',
             };
 
@@ -193,7 +194,7 @@ class Dashboard
         $rank = ['critical' => 0, 'serious' => 1, 'warning' => 2];
         $sorted = $rows->sortBy([
             fn ($a, $b) => $rank[$a['severity']] <=> $rank[$b['severity']],
-            fn ($a, $b) => ($a['stock']->item->criticality?->value ?? 'Z') <=> ($b['stock']->item->criticality?->value ?? 'Z'),
+            fn ($a, $b) => ($a['stock']->item->criticality?->rank() ?? 9) <=> ($b['stock']->item->criticality?->rank() ?? 9),
             fn ($a, $b) => $a['ratio'] <=> $b['ratio'],
         ])->values();
 
@@ -296,7 +297,7 @@ class Dashboard
     }
 
     /**
-     * Stock rows for alerts: active items, with item and site loaded, class A first (SPEC 8).
+     * Stock rows for alerts: active items, with item and site loaded, high criticality first (SPEC 8).
      */
     private function stocks(): Builder
     {
@@ -306,7 +307,7 @@ class Dashboard
             ->where('items.is_active', true)
             ->when($this->site, fn ($q, $site) => $q->where('stocks.site_id', $site->id))
             ->with(['item', 'site'])
-            ->orderByRaw('items.criticality IS NULL, items.criticality')
+            ->orderByRaw(Criticality::orderSql('items.criticality'))
             ->orderBy('items.sku');
     }
 

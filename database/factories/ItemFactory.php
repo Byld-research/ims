@@ -23,7 +23,7 @@ class ItemFactory extends Factory
             'uom' => 'pc',
             'manufacturer' => fake()->company(),
             'mpn' => fake()->bothify('??-####'),
-            'criticality' => fake()->randomElement(['A', 'B', 'C', null]),
+            'criticality' => fake()->randomElement(['HIGH', 'NORMAL', 'LOW', null]),
             'is_active' => true,
         ];
     }

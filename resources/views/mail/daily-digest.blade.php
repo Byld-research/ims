@@ -15,7 +15,7 @@
 | {{ __('Item') }} | @if ($allSites){{ __('Site') }} | @endif{{ __('Stock / min') }} | {{ __('On order') }} |
 |:--|@if ($allSites):--|@endif--:|--:|
 @foreach ($sections['below']['rows'] as $stock)
-| {{ $stock->item->criticality?->value ? '['.$stock->item->criticality->value.'] ' : '' }}{{ $stock->item->sku }} {{ $stock->item->name }} | @if ($allSites){{ $stock->site->code }} | @endif{{ Format::qty($stock->qty) }} / {{ Format::qty($stock->min_level) }} {{ $stock->item->uom }} | {{ isset($digest->onOrder[$stock->item_id][$stock->site_id]) ? Format::qty($digest->onOrder[$stock->item_id][$stock->site_id]) : '' }} |
+| {{ $stock->item->criticality ? '['.$stock->item->criticality->label().'] ' : '' }}{{ $stock->item->sku }} {{ $stock->item->name }} | @if ($allSites){{ $stock->site->code }} | @endif{{ Format::qty($stock->qty) }} / {{ Format::qty($stock->min_level) }} {{ $stock->item->uom }} | {{ isset($digest->onOrder[$stock->item_id][$stock->site_id]) ? Format::qty($digest->onOrder[$stock->item_id][$stock->site_id]) : '' }} |
 @endforeach
 </x-mail::table>
 @if ($sections['below']['total'] > $sections['below']['rows']->count())

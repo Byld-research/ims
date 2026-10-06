@@ -17,7 +17,7 @@
                 <dl class="dl">
                     <dt>{{ __('SKU') }}</dt><dd class="font-mono">{{ $item->sku }}</dd>
                     <dt>{{ __('Unit') }}</dt><dd>{{ $item->uom }}</dd>
-                    <dt>{{ __('Criticality') }}</dt><dd>{{ $item->criticality?->value ?? '—' }}</dd>
+                    <dt>{{ __('Criticality') }}</dt><dd>{{ $item->criticality?->label() ?? '—' }}</dd>
                     <dt>{{ __('Manufacturer') }}</dt><dd>{{ $item->manufacturer ?? '—' }}</dd>
                     <dt>{{ __('MPN') }}</dt><dd>{{ $item->mpn ?? '—' }}</dd>
                     <dt>{{ __('Drawing') }}</dt><dd>{{ $item->drawing_no ?? '—' }}</dd>
@@ -59,7 +59,7 @@
                                             {{ $stock && bccomp($stock->min_level, '0', 3) > 0 ? \App\Support\Format::qty($stock->min_level) : '—' }}
                                         @endif
                                         @if ($stock?->needsReplenishment())
-                                            <span class="badge-red ms-1">{{ __('Low') }}</span>
+                                            <span class="badge-red ms-1">{{ __('Below min') }}</span>
                                         @endif
                                     </td>
                                     <td>{{ $stock?->bin ?? '—' }}</td>

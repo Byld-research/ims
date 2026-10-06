@@ -78,8 +78,8 @@ class StockController extends Controller
             ->when($filters['below'] ?? false, fn ($q) => $q->whereHas('stocks', fn ($q) => $atSite($q)->needsReplenishment()))
             ->when($filters['kanban'] ?? false, fn ($q) => $q->whereHas('stocks', fn ($q) => $atSite($q)->where('is_kanban', true)))
             ->when($filters['below'] ?? false,
-                // Class A first, then B, C and unclassified (SPEC 8).
-                fn ($q) => $q->orderByRaw('criticality is null, criticality'))
+                // High criticality first, then normal, low and unset (SPEC 8).
+                fn ($q) => $q->orderByRaw(Criticality::orderSql('criticality')))
             ->orderBy('sku');
     }
 
@@ -97,7 +97,7 @@ class StockController extends Controller
         $rows = (function () use ($query, $sites, $site) {
             foreach ($query->lazy(500) as $item) {
                 $stocks = $item->stocks->keyBy('site_id');
-                $row = [$item->sku, $item->name, $item->category->fullName(), $item->uom, $item->criticality,
+                $row = [$item->sku, $item->name, $item->category->fullName(), $item->uom, $item->criticality?->label(),
                     $item->manufacturer, $item->mpn, $item->is_active];
                 foreach ($sites as $each) {
                     $row[] = $stocks->get($each->id)?->qty ?? '0.000';

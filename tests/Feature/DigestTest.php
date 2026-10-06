@@ -30,7 +30,7 @@ beforeEach(function () {
 
 function shortOfBlades(Site $site): void
 {
-    $blade = Item::query()->firstWhere('sku', 'SP-10001') ?? Item::factory()->create(['sku' => 'SP-10001', 'criticality' => 'A']);
+    $blade = Item::query()->firstWhere('sku', 'SP-10001') ?? Item::factory()->create(['sku' => 'SP-10001', 'criticality' => 'HIGH']);
     app(StockService::class)->adjust($blade, $site, true, '1', ReasonCode::adjustment('FOUND'), User::factory()->admin()->create(), '412');
     Stock::query()->where('item_id', $blade->id)->where('site_id', $site->id)->update(['min_level' => 2]);
 }

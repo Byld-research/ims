@@ -54,7 +54,7 @@
                 <header class="card-body pb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ __('Stock to act on') }}</h3>
-                        <p class="text-xs text-gray-500">{{ __('Worst first: out of stock, then class A, then least left. The mark on each bar is the minimum (or one bin of a two-bin item).') }}</p>
+                        <p class="text-xs text-gray-500">{{ __('Worst first: out of stock, then high criticality, then least left. The mark on each bar is the minimum (or one bin of a two-bin item).') }}</p>
                     </div>
                     @if ($attention['total'] > $attention['rows']->count())
                         <a class="link text-sm" href="{{ route('stock.index', ['below' => 1]) }}">{{ __('All :n', ['n' => $attention['total']]) }} →</a>
@@ -81,11 +81,11 @@
                                 $threshold = $stock->is_kanban ? $stock->bin_qty : $stock->min_level;
                                 $chip = match ($row['severity']) {
                                     'critical' => __('Out'),
-                                    'serious' => __('Low · A'),
-                                    default => $stock->is_kanban ? __('Refill') : __('Low'),
+                                    'serious' => __('Below min'),
+                                    default => $stock->is_kanban ? __('Refill') : __('Below min'),
                                 };
                                 $details = array_filter([
-                                    $stock->item->criticality ? __('Class :c', ['c' => $stock->item->criticality->value]) : null,
+                                    $stock->item->criticality ? __(':c criticality', ['c' => $stock->item->criticality->label()]) : null,
                                     $stock->bin ? __('location :b', ['b' => $stock->bin]) : null,
                                     $siteCodes ? $stock->site->code : null,
                                 ]);
@@ -182,7 +182,7 @@
                             $state = match (true) {
                                 ! $hasLevel => ['warning', __('No minimum set')],
                                 bccomp($stock->qty, '0', 3) === 0 => ['critical', __('Out')],
-                                $stock->needsReplenishment() => [$stock->is_kanban ? 'warning' : 'serious', $stock->is_kanban ? __('Refill') : __('Low')],
+                                $stock->needsReplenishment() => [$stock->is_kanban ? 'warning' : 'serious', $stock->is_kanban ? __('Refill') : __('Below min')],
                                 default => ['good', __('OK')],
                             };
                         @endphp

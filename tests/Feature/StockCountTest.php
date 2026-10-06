@@ -24,8 +24,8 @@ beforeEach(function () {
     $this->georgia = Site::query()->where('code', 'BPC001')->sole();
     $this->manager = User::factory()->manager($this->colorado)->create();
     $this->category = Category::factory()->create(['name' => 'Cutting']);
-    $this->blade = Item::factory()->for($this->category)->create(['sku' => 'SP-10001', 'uom' => 'pc', 'criticality' => 'A']);
-    $this->filter = Item::factory()->create(['sku' => 'CS-30001', 'uom' => 'pc', 'criticality' => 'C']);
+    $this->blade = Item::factory()->for($this->category)->create(['sku' => 'SP-10001', 'uom' => 'pc', 'criticality' => 'HIGH']);
+    $this->filter = Item::factory()->create(['sku' => 'CS-30001', 'uom' => 'pc', 'criticality' => 'LOW']);
 
     $found = ReasonCode::adjustment('FOUND');
     app(StockService::class)->adjust($this->blade, $this->colorado, true, '4', $found, $this->manager, '412');
@@ -49,7 +49,7 @@ test('a manager creates a count and adds items by category, class, due date and 
 
     $this->post(route('stock-counts.lines.store', $count), ['by' => 'category', 'category_id' => $this->category->parent_id])
         ->assertSessionHas('success', '1 item added.');
-    $this->post(route('stock-counts.lines.store', $count), ['by' => 'criticality', 'criticality' => 'C'])
+    $this->post(route('stock-counts.lines.store', $count), ['by' => 'criticality', 'criticality' => 'LOW'])
         ->assertSessionHas('success', '1 item added.');
     $this->post(route('stock-counts.lines.store', $count), ['by' => 'due'])
         ->assertSessionHas('success', 'No new items: they are all on the count already.');

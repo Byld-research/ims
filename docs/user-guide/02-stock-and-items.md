@@ -11,11 +11,11 @@
 - **One column per site**, your site highlighted. Quantities of the other site are for reading.
 - For your site: **Min** (minimum level, or *bin N* for two-bin items), **Location** (shelf), **Value** (quantity × average cost) and **Status**:
   - **Out**: a minimum is set and nothing is left
-  - **Low**: below the minimum
+  - **Below min**: below the minimum
   - **Refill**: two-bin item at one bin or less
 - **On order**: quantity still expected on open purchase orders for your site. It is shown next to a shortage, but never counted as stock.
 
-Filters: search by SKU, name or manufacturer part number; category (a top-level group includes its subcategories); criticality; **Needs replenishment** (class A first); **Two-bin only**; **Include inactive**.
+Filters: search by SKU, name or manufacturer part number; category (a top-level group includes its subcategories); criticality; **Needs replenishment** (high criticality first); **Two-bin only**; **Include inactive**.
 
 ## The item page
 
@@ -42,7 +42,7 @@ Managers and administrators: **Inventory → New item**.
 |---|---|
 | **SKU** | Required, unique, up to 40 characters. Once the item has any stock movement, the SKU is locked. When the numbering scheme is agreed, the system checks it automatically. |
 | **Name**, **Category**, **Unit of measure** | Required. The category must be a subcategory (e.g. *Spare Parts / Mechanical*); top-level groups only group. |
-| **Criticality** | **A**: failure stops production and the part is hard to get. **B**, **C**: lower. Drives the dashboard order and how often the item should be counted. |
+| **Criticality** | **High**: its failure stops production and it is hard to get. **Normal**, **Low**: less critical. Drives the dashboard order and how often the item should be counted. |
 | Manufacturer, manufacturer part no., drawing no., description | Optional, but they help find the right part |
 | **Active** | Untick to retire an item. It disappears from pickers and lists but keeps its history. Items are never deleted. |
 

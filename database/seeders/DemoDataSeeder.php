@@ -51,28 +51,28 @@ class DemoDataSeeder extends Seeder
 
         // [sku, name, category, uom, criticality, manufacturer, mpn, supplier, price, pack]
         $items = [
-            ['SP-10001', 'Saw blade 18" carbide, 72T', 'Cutting', 'pc', 'A', 'Leitz', 'WK-18-72', 'Kraków warehouse', '412.0000', 1],
-            ['SP-10002', 'Linear guide bearing block', 'Mechanical', 'pc', 'A', 'Hiwin', 'HGH25CA', 'Kraków warehouse', '186.5000', 1],
-            ['SP-10003', 'Timing belt HTD 8M-30', 'Mechanical', 'pc', 'B', 'Gates', '8MGT-1200-30', 'McMaster-Carr', '74.2000', 1],
-            ['SP-10004', 'Proximity sensor M18 PNP', 'Electrical', 'pc', 'A', 'Sick', 'IME18-08BPSZC0S', 'Grainger', '96.8000', 1],
-            ['SP-10005', 'Servo drive cable 10 m', 'Electrical', 'pc', 'A', 'Siemens', '6FX5002-5CS01-1BA0', 'Kraków warehouse', '238.0000', 1],
-            ['SP-10006', 'Pneumatic cylinder 50x100', 'Pneumatic', 'pc', 'B', 'Festo', 'DSBC-50-100-PPVA-N3', 'Kraków warehouse', '321.4000', 1],
-            ['SP-10007', 'Solenoid valve 5/2 24VDC', 'Pneumatic', 'pc', 'B', 'Festo', 'VUVG-L14-M52-MT-G18-1R8L', 'Grainger', '142.0000', 1],
-            ['SP-10008', 'Hydraulic hose 1/2" x 1 m', 'Hydraulic', 'pc', 'C', 'Parker', '471TC-8', 'Grainger', '38.9000', 1],
-            ['SP-10009', 'Light curtain receiver', 'Electronic & Optics', 'pc', 'A', 'Sick', 'C4P-EA15031A00', 'Kraków warehouse', '1280.0000', 1],
-            ['WP-20001', 'Nail plate press punch', 'Punches', 'pc', 'A', null, 'DRW-4471', 'Kraków warehouse', '265.0000', 1],
-            ['WP-20002', 'Die blade, upper', 'Die Blades', 'pc', 'A', null, 'DRW-4472', 'Kraków warehouse', '198.0000', 1],
-            ['CS-30001', 'Air filter element', 'Filtration', 'pc', 'C', 'Donaldson', 'P181052', 'Grainger', '41.3000', 6],
-            ['CS-30002', 'Hydraulic oil ISO VG 46', 'Lubricants & Fluids', 'l', 'C', 'Mobil', 'DTE 25', 'Grainger', '6.1500', 20],
-            ['CS-30003', 'Grease cartridge EP2', 'Lubricants & Fluids', 'pc', 'C', 'SKF', 'LGEP 2/0.4', 'Fastenal', '17.8000', 10],
-            ['CS-30004', 'Hex bolt M10x40 8.8 zinc', 'Fasteners', 'pc', 'C', null, null, 'Fastenal', '0.3100', 100],
-            ['CS-30005', 'O-ring kit, metric', 'Seals & Gaskets', 'set', 'C', 'Parker', 'ORK-METRIC', 'McMaster-Carr', '54.0000', 1],
+            ['SP-10001', 'Saw blade 18" carbide, 72T', 'Cutting', 'pc', 'HIGH', 'Leitz', 'WK-18-72', 'Kraków warehouse', '412.0000', 1],
+            ['SP-10002', 'Linear guide bearing block', 'Mechanical', 'pc', 'HIGH', 'Hiwin', 'HGH25CA', 'Kraków warehouse', '186.5000', 1],
+            ['SP-10003', 'Timing belt HTD 8M-30', 'Mechanical', 'pc', 'NORMAL', 'Gates', '8MGT-1200-30', 'McMaster-Carr', '74.2000', 1],
+            ['SP-10004', 'Proximity sensor M18 PNP', 'Electrical', 'pc', 'HIGH', 'Sick', 'IME18-08BPSZC0S', 'Grainger', '96.8000', 1],
+            ['SP-10005', 'Servo drive cable 10 m', 'Electrical', 'pc', 'HIGH', 'Siemens', '6FX5002-5CS01-1BA0', 'Kraków warehouse', '238.0000', 1],
+            ['SP-10006', 'Pneumatic cylinder 50x100', 'Pneumatic', 'pc', 'NORMAL', 'Festo', 'DSBC-50-100-PPVA-N3', 'Kraków warehouse', '321.4000', 1],
+            ['SP-10007', 'Solenoid valve 5/2 24VDC', 'Pneumatic', 'pc', 'NORMAL', 'Festo', 'VUVG-L14-M52-MT-G18-1R8L', 'Grainger', '142.0000', 1],
+            ['SP-10008', 'Hydraulic hose 1/2" x 1 m', 'Hydraulic', 'pc', 'LOW', 'Parker', '471TC-8', 'Grainger', '38.9000', 1],
+            ['SP-10009', 'Light curtain receiver', 'Electronic & Optics', 'pc', 'HIGH', 'Sick', 'C4P-EA15031A00', 'Kraków warehouse', '1280.0000', 1],
+            ['WP-20001', 'Nail plate press punch', 'Punches', 'pc', 'HIGH', null, 'DRW-4471', 'Kraków warehouse', '265.0000', 1],
+            ['WP-20002', 'Die blade, upper', 'Die Blades', 'pc', 'HIGH', null, 'DRW-4472', 'Kraków warehouse', '198.0000', 1],
+            ['CS-30001', 'Air filter element', 'Filtration', 'pc', 'LOW', 'Donaldson', 'P181052', 'Grainger', '41.3000', 6],
+            ['CS-30002', 'Hydraulic oil ISO VG 46', 'Lubricants & Fluids', 'l', 'LOW', 'Mobil', 'DTE 25', 'Grainger', '6.1500', 20],
+            ['CS-30003', 'Grease cartridge EP2', 'Lubricants & Fluids', 'pc', 'LOW', 'SKF', 'LGEP 2/0.4', 'Fastenal', '17.8000', 10],
+            ['CS-30004', 'Hex bolt M10x40 8.8 zinc', 'Fasteners', 'pc', 'LOW', null, null, 'Fastenal', '0.3100', 100],
+            ['CS-30005', 'O-ring kit, metric', 'Seals & Gaskets', 'set', 'LOW', 'Parker', 'ORK-METRIC', 'McMaster-Carr', '54.0000', 1],
             ['TL-40001', 'Cordless impact driver 18V', 'Power Tools', 'pc', null, 'DeWalt', 'DCF887', 'Grainger', '189.0000', 1],
             ['TL-40002', 'Torque wrench 20-100 Nm', 'Hand Tools', 'pc', null, 'Wera', '05075610001', 'McMaster-Carr', '246.0000', 1],
             ['TL-40003', 'Digital caliper 150 mm', 'Measuring & Gauges', 'pc', null, 'Mitutoyo', '500-196-30', 'McMaster-Carr', '128.0000', 1],
-            ['SP-10010', 'Conveyor roller 1.9" x 24"', 'Mechanical', 'pc', 'B', 'Hytrol', 'R-19-24', 'Hytrol Parts Direct', '32.7500', 1],
-            ['SP-10011', 'Stepper drive, saw axis (rev 1.0)', 'Electrical', 'pc', 'A', 'Leadshine', 'DM860H', 'Kraków warehouse', '214.0000', 1],
-            ['SP-10012', 'Stepper motor cable 8 m', 'Electrical', 'pc', 'A', 'Leadshine', 'CABLE-M-8', 'Kraków warehouse', '61.0000', 1],
+            ['SP-10010', 'Conveyor roller 1.9" x 24"', 'Mechanical', 'pc', 'NORMAL', 'Hytrol', 'R-19-24', 'Hytrol Parts Direct', '32.7500', 1],
+            ['SP-10011', 'Stepper drive, saw axis (rev 1.0)', 'Electrical', 'pc', 'HIGH', 'Leadshine', 'DM860H', 'Kraków warehouse', '214.0000', 1],
+            ['SP-10012', 'Stepper motor cable 8 m', 'Electrical', 'pc', 'HIGH', 'Leadshine', 'CABLE-M-8', 'Kraków warehouse', '61.0000', 1],
         ];
 
         foreach ($items as [$sku, $name, $categoryName, $uom, $criticality, $manufacturer, $mpn, $supplier, $price, $pack]) {
@@ -143,7 +143,7 @@ class DemoDataSeeder extends Seeder
     }
 
     /**
-     * Colorado: a posted class A count from two weeks ago that found one blade missing, and a
+     * Colorado: a posted high-criticality count from two weeks ago that found one blade missing, and a
      * consumables count in progress. Skipped when any count exists.
      */
     private function stockCounts(): void
@@ -158,7 +158,7 @@ class DemoDataSeeder extends Seeder
         $ids = fn (array $skus) => Item::query()->whereIn('sku', $skus)->pluck('id', 'sku');
 
         Carbon::setTestNow(now()->subDays(14)->setTime(15, 0));
-        $classA = $counts->create($colorado, $user, 'Class A monthly');
+        $classA = $counts->create($colorado, $user, 'High criticality monthly');
         $counts->addItems($classA, $ids(['SP-10001', 'SP-10002', 'SP-10004', 'WP-20001'])->values()->all());
         $counts->startCounting($classA);
         $lines = $classA->lines()->with('item')->get()->keyBy('item.sku');

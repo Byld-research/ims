@@ -26,9 +26,9 @@ Colour is never the only signal: every state also has its own icon shape and a w
 
 ### 2. Stock to act on
 
-Every item that needs replenishment, **worst first**: out of stock, then class A, then the item with the least left compared to its minimum. Each row shows:
+Every item that needs replenishment, **worst first**: out of stock, then high criticality, then the item with the least left compared to its minimum. Each row shows:
 
-- a coloured stripe and a status (**Out**, **Low · A**, **Low**, **Refill**);
+- a coloured stripe and a status: **Out** (red ✕), **Below min** (orange ▲ for high criticality, amber ● otherwise), **Refill** (amber ●); the criticality is written under the item name;
 - a **level bar**: the fill is the stock, the black mark is the minimum (or one bin of a two-bin item);
 - what is already **on order**;
 - **used, 12 weeks**: a small line of weekly usage, the current week as a blue dot. A flat line or *not used* means the item is not moving; a busy line means it needs watching.

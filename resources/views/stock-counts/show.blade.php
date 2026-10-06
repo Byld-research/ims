@@ -37,7 +37,7 @@
                         <select name="by" id="by" x-model="by" class="form-input mt-1">
                             <option value="due">{{ __('Due for counting (:n)', ['n' => $dueCount]) }}</option>
                             <option value="category">{{ __('Category') }}</option>
-                            <option value="criticality">{{ __('Criticality class') }}</option>
+                            <option value="criticality">{{ __('Criticality') }}</option>
                             <option value="kanban">{{ __('Two-bin items') }}</option>
                             <option value="item">{{ __('Single item') }}</option>
                         </select>
@@ -55,9 +55,9 @@
                         </div>
                         <div x-show="by === 'criticality'" x-cloak>
                             <select name="criticality" class="form-input" :disabled="by !== 'criticality'" aria-label="{{ __('Criticality') }}">
-                                <option value="A">{{ __('Class A') }}</option>
-                                <option value="B">{{ __('Class B') }}</option>
-                                <option value="C">{{ __('Class C') }}</option>
+                                @foreach (App\Enums\Criticality::options() as $value => $label)
+                                    <option value="{{ $value }}">{{ __(':c criticality', ['c' => $label]) }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div x-show="by === 'item'" x-cloak>

@@ -12,7 +12,7 @@ Minimum levels, shelf locations and two-bin settings are kept **per site**: the 
 
 | Column | Meaning |
 |---|---|
-| **Min level** | Below this the item is flagged *Low*. **Empty or 0 turns the alert off.** |
+| **Min level** | Below this the item is flagged *Below min*. **Empty or 0 turns the alert off.** |
 | **Location** | Where the item is stored: free text, e.g. shelf `CO-SP01` |
 | **Two-bin** | Tick for low-value, regularly used items kept in two bins (see below) |
 | **Qty per bin** | How many units one bin holds. Required for two-bin items. |

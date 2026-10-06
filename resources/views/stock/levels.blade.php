@@ -62,7 +62,7 @@
                                 <td>
                                     <span class="font-mono">{{ $item->sku }}</span>
                                     <span class="text-gray-700">{{ $item->name }}</span>
-                                    <span class="block text-xs text-gray-500">{{ $item->category->name }} @if ($item->criticality) · {{ __('class :c', ['c' => $item->criticality->value]) }} @endif</span>
+                                    <span class="block text-xs text-gray-500">{{ $item->category->name }} @if ($item->criticality) · {{ __(':c criticality', ['c' => strtolower($item->criticality->label())]) }} @endif</span>
                                 </td>
                                 <td class="num">{{ \App\Support\Format::qty($stock?->qty ?? 0) }} {{ $item->uom }}</td>
                                 <td class="num">

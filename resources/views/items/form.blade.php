@@ -52,8 +52,8 @@
             </div>
 
             <div class="grid gap-5 sm:grid-cols-3">
-                <x-field name="criticality" :label="__('Criticality')" :hint="__('A: failure stops production and the part is hard to get.')">
-                    <x-select name="criticality" :options="['A' => 'A', 'B' => 'B', 'C' => 'C']" :value="$item->criticality" :placeholder="__('— Not set —')" />
+                <x-field name="criticality" :label="__('Criticality')" :hint="__('High: its failure stops production and it is hard to get.')">
+                    <x-select name="criticality" :options="App\Enums\Criticality::options()" :value="$item->criticality" :placeholder="__('— Not set —')" />
                 </x-field>
 
                 @if ($item->exists)

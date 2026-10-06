@@ -12,7 +12,7 @@
         @if ($dueCount)
             <div class="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
                 {{ trans_choice('{1} 1 item is due for counting|[2,*] :count items are due for counting', $dueCount, ['count' => $dueCount]) }}
-                {{ __('(class A monthly; B, C and two-bin items quarterly). Add them to a count with “Due for counting”.') }}
+                {{ __('(high criticality monthly; normal, low and two-bin items quarterly). Add them to a count with “Due for counting”.') }}
             </div>
         @endif
 

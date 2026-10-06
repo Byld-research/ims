@@ -20,7 +20,7 @@
             </div>
             <div>
                 <label for="criticality" class="block text-xs font-medium text-gray-600">{{ __('Criticality') }}</label>
-                <x-select name="criticality" :options="['A' => 'A', 'B' => 'B', 'C' => 'C']" :value="$filters['criticality'] ?? null" :placeholder="__('Any')" class="mt-1" />
+                <x-select name="criticality" :options="App\Enums\Criticality::options()" :value="$filters['criticality'] ?? null" :placeholder="__('Any')" class="mt-1" />
             </div>
             <div class="space-y-1 text-sm text-gray-700">
                 <label class="flex items-center gap-1.5"><input type="checkbox" name="below" value="1" @checked($filters['below'] ?? false) class="form-checkbox"> {{ __('Needs replenishment') }}</label>
@@ -38,7 +38,7 @@
                     <tr>
                         <th>{{ __('SKU') }}</th>
                         <th>{{ __('Name') }}</th>
-                        <th>{{ __('Crit.') }}</th>
+                        <th>{{ __('Criticality') }}</th>
                         @foreach ($sites as $each)
                             <th class="num {{ $currentSiteId === $each->id ? 'text-indigo-700' : '' }}">{{ $each->code }}</th>
                         @endforeach
@@ -67,7 +67,7 @@
                                     <span class="badge-gray">{{ __('Inactive') }}</span>
                                 @endunless
                             </td>
-                            <td>{{ $item->criticality?->value }}</td>
+                            <td class="text-gray-700">{{ $item->criticality?->label() }}</td>
                             @foreach ($sites as $each)
                                 @php($stock = $stocks->get($each->id))
                                 <td class="num {{ $currentSiteId === $each->id ? 'font-semibold' : 'text-gray-600' }}">
@@ -97,7 +97,7 @@
                                         @elseif (bccomp($here->qty, '0', 3) === 0)
                                             <span class="badge-red">{{ __('Out') }}</span>
                                         @else
-                                            <span class="badge-red">{{ __('Low') }}</span>
+                                            <span class="badge-red">{{ __('Below min') }}</span>
                                         @endif
                                     @endif
                                 </td>

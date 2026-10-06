@@ -48,13 +48,13 @@ function dashboard(?Site $site = null): Dashboard
     return new Dashboard($site ?? test()->colorado);
 }
 
-test('alerts split below minimum, out of stock and kanban refills, class A first', function () {
-    stocked('LOW-C', '1', '1', ['min_level' => 3], 'C');
-    stocked('LOW-A', '1', '1', ['min_level' => 3], 'A');
-    stocked('OUT-1', '0', '1', ['min_level' => 2], 'B');
+test('alerts split below minimum, out of stock and kanban refills, high criticality first', function () {
+    stocked('LOW-C', '1', '1', ['min_level' => 3], 'LOW');
+    stocked('LOW-A', '1', '1', ['min_level' => 3], 'HIGH');
+    stocked('OUT-1', '0', '1', ['min_level' => 2], 'NORMAL');
     stocked('KB-1', '6', '1', ['is_kanban' => true, 'bin_qty' => 6]);
     stocked('OK-1', '9', '1', ['min_level' => 3]);
-    stocked('GA-LOW', '1', '1', ['min_level' => 3], 'A', $this->georgia);
+    stocked('GA-LOW', '1', '1', ['min_level' => 3], 'HIGH', $this->georgia);
 
     $alerts = dashboard()->alerts();
 
@@ -144,7 +144,7 @@ test('items in stock with no movement for 12 months', function () {
 });
 
 test('the dashboard renders alerts and figures for the manager’s site', function () {
-    stocked('SP-10001', '1', '412', ['min_level' => 2], 'A');
+    stocked('SP-10001', '1', '412', ['min_level' => 2], 'HIGH');
     $blade = Item::query()->where('sku', 'SP-10001')->sole();
     $this->stock->issueToMachine($blade, $this->saw004, '1', $this->manager);
 
@@ -165,12 +165,12 @@ test('with nothing to act on, every status tile reads all clear', function () {
     $response->assertSee('Every item with a minimum is above it.')->assertSee('No late or stuck orders.');
 });
 
-test('stock to act on is ordered worst first: out of stock, class A, then least left', function () {
-    stocked('LOW-C-HALF', '1', '1', ['min_level' => 2], 'C');
-    stocked('LOW-C-TENTH', '1', '1', ['min_level' => 10], 'C');
-    stocked('LOW-A', '3', '1', ['min_level' => 4], 'A');
-    stocked('OUT-B', '0', '1', ['min_level' => 1], 'B');
-    stocked('KANBAN', '2', '1', ['is_kanban' => true, 'bin_qty' => 5], 'C');
+test('stock to act on is ordered worst first: out of stock, high criticality, then least left', function () {
+    stocked('LOW-C-HALF', '1', '1', ['min_level' => 2], 'LOW');
+    stocked('LOW-C-TENTH', '1', '1', ['min_level' => 10], 'LOW');
+    stocked('LOW-A', '3', '1', ['min_level' => 4], 'HIGH');
+    stocked('OUT-B', '0', '1', ['min_level' => 1], 'NORMAL');
+    stocked('KANBAN', '2', '1', ['is_kanban' => true, 'bin_qty' => 5], 'LOW');
 
     $rows = dashboard()->attention()['rows'];
 
@@ -211,7 +211,7 @@ test('weekly usage covers twelve weeks, oldest first', function () {
 });
 
 test('administrators see the consolidated view with site codes', function () {
-    stocked('GA-LOW', '1', '1', ['min_level' => 3], 'A', $this->georgia);
+    stocked('GA-LOW', '1', '1', ['min_level' => 3], 'HIGH', $this->georgia);
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)->post(route('site.select'), ['site' => 'all']);
