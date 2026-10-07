@@ -3,7 +3,11 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="font-semibold text-gray-900 tracking-tight">BPC Inventory</a>
+                    {{-- Company logo, with the application name as a small tagline --}}
+                    <a href="{{ route('dashboard') }}" class="flex flex-col items-start justify-center gap-1" aria-label="{{ __('BPC Inventory System, dashboard') }}">
+                        <img src="{{ asset('images/byld-logo.png') }}" alt="BYLD" class="w-20">
+                        <span class="text-[10px] font-medium uppercase leading-none tracking-wider text-gray-500">BPC Inventory System</span>
+                    </a>
                 </div>
 
                 {{-- Sections --}}

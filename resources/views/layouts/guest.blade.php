@@ -17,8 +17,9 @@
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
             <div>
-                <a href="/">
-                    <span class="text-2xl font-semibold tracking-tight text-gray-800">BPC Inventory</span>
+                <a href="/" class="flex flex-col items-center gap-2">
+                    <img src="{{ asset('images/byld-logo.png') }}" alt="BYLD" class="w-36">
+                    <span class="text-xs font-medium uppercase tracking-wider text-gray-500">BPC Inventory System</span>
                 </a>
             </div>
 
