@@ -1,6 +1,6 @@
 # 11. Messages and what to do
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 The system refuses anything that would make the records wrong, and says why. The most common messages, in the words the screen uses:
 

@@ -1,6 +1,6 @@
 # 9. Administration
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 **Admin ▾** is visible to administrators only.
 

@@ -1,6 +1,6 @@
 # 6. Purchasing
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 Purchase orders are raised by the **manager of the site that needs the goods**; each order delivers to one site. Everyone can read orders. Payment and invoices are handled outside the system.
 

@@ -1,6 +1,6 @@
 # 8. Dashboard and daily digest
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 ## Dashboard
 

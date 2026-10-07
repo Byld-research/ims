@@ -1,6 +1,6 @@
 # 5. Issuing, transfers and adjustments
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 These three are the only ways stock changes outside purchase orders and counts. They are for **managers at their own site** and administrators. Every one of them is recorded permanently with who, when and why.
 

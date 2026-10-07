@@ -1,6 +1,6 @@
 # 2. Inventory and items
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 ## Inventory
 

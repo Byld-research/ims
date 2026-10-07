@@ -1,6 +1,6 @@
 # 4. Min levels, locations and two-bin items
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 Minimum levels, shelf locations and two-bin settings are kept **per site**: the same item can have a minimum of 2 in Colorado and none in Georgia.
 

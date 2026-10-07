@@ -1,6 +1,6 @@
 # 1. Getting started
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 ## Logging in
 
@@ -10,7 +10,7 @@ Open the address your administrator gave you and log in with your email and pass
 
 - There is no self-registration. Accounts are created by an administrator.
 - **Forgot your password?** sends a reset link by email.
-- After a period without activity (set by the administrator; 60 minutes is recommended) you are logged out and asked to log in again.
+- After a period without activity (60 minutes, set on the server) you are logged out and asked to log in again.
 - If your account is deactivated, the login fails as if the password were wrong.
 
 ## The screen

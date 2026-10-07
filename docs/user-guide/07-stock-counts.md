@@ -1,6 +1,6 @@
 # 7. Stock counts
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 ## The opening count (go-live)
 

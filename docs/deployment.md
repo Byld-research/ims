@@ -41,6 +41,8 @@ The Cloud Web 1 plan offered PHP 8.0 at most and MySQL 5.6, both out of support;
 
    It works because the domain's SPF record lists the VPS address `144.217.90.113`; keep it there. Outgoing connections prefer IPv4 (`precedence ::ffff:0:0/96 100` in `/etc/gai.conf`): Microsoft rejects the VPS's IPv6 address, which is on a Spamhaus list and not in SPF. If a Microsoft 365 administrator enables *Reject Direct Send*, mail stops; then use an SMTP relay connector for `144.217.90.113` or a transactional mail service.
 
+9. **Backups**: `ims:backup` writes a nightly database dump to `/var/backups/ims` (07:00 UTC). OVH's automated VPS backup copies the whole server daily to another data centre, dumps included; restore from the OVH control panel.
+
 ## Changing `.env` on the server
 
 `.env` must stay `-rw-r----- ubuntu www-data`, or PHP cannot read it and the app runs without its settings. `sed -i` and most editors replace the file and lose the group, so after any edit:
@@ -79,5 +81,4 @@ ssh -i ~/.ssh/vps_ims -o IdentitiesOnly=yes ubuntu@144.217.90.113 'cd /var/www/i
 
 ## Still to do
 
-- **Off-server backups**: the nightly dumps are on the same disk as the database. Enable OVH's automated VPS backup, or copy `/var/backups/ims` elsewhere.
 - **Users outside @byldinc.com** would need a different mail setup (see Email above).

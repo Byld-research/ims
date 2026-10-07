@@ -1,6 +1,6 @@
 # 3. Machines and parts lists
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 ## Machine types and machines
 

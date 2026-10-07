@@ -1,15 +1,15 @@
 # 10. Go-live checklist
 
-[← Back to README](../../README.md)
+[← Back to the user guide](../USER-GUIDE.md)
 
 For the project team. Each step lists who is typically responsible; adjust the owners in review. The order matters: later steps depend on earlier ones.
 
 | # | Step | Owner | Done when |
 |---|---|---|---|
 | 1 | **Agree the item SKU numbering scheme** and give the pattern to IT (`SKU_PATTERN`) | Project owner | Pattern set; new items are checked against it |
-| 2 | **Production server**: HTTPS address, database, email (SMTP), backup location off the database server, scheduler (cron) | IT | Application reachable; a test email arrives |
-| 3 | **Prove the backups**: run a backup and the restore test | IT | `ims:restore-test` reports *passed* |
-| 4 | **First administrator** account; then manager and operator accounts per site, digest switched on for managers | IT, then administrator | Everyone can log in at their site |
+| 2 | **Production server**: HTTPS address, database, email, backups, scheduler (cron). **Done:** https://ims.byldinc.com on the OVH VPS; email through Microsoft 365, reaching @byldinc.com addresses only; nightly database backup plus OVH's daily VPS backup in another data centre (see [deployment](../deployment.md)) | IT | Application reachable; a test email arrives |
+| 3 | **Prove the backups**: run a backup and the restore test. **Done** on 2026-10-06 | IT | `ims:restore-test` reports *passed* |
+| 4 | **First administrator** account (done: admin@byldinc.com); then manager and operator accounts per site with **@byldinc.com** addresses, digest switched on for managers | IT, then administrator | Everyone can log in at their site |
 | 5 | **Catalogue**: items with SKU, name, category, unit, criticality; suppliers with prices and pack sizes | Technical data owner | Items in the inventory; suppliers linked |
 | 6 | **Parts lists** per machine type, starting with **C · Truss Saw** (003C rev 1.0, 004C rev 2.0), imported from the spreadsheets via CSV | Technical data owner | Each machine page shows its parts |
 | 7 | **Minimum levels and locations** per site, from the suggested quantities in the spare parts spreadsheets; mark two-bin items | Site manager | *Min levels & locations* filled; no high-criticality item without a level |
