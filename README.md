@@ -20,6 +20,7 @@ It covers spare parts, wear parts, consumables and tools for the production mach
 | [User guide chapters](docs/user-guide/) | one chapter per task, in full detail (11 chapters) | everyone |
 | **[FAQ](docs/FAQ.md)** | the 25 questions users ask most | everyone |
 | **[Architecture and technical guide](docs/ARCHITECTURE.md)** | stack, layout, data model, stock ledger, concurrency, authorisation, testing, configuration, how-to recipes | developers |
+| [API](docs/API.md) | the read-only API for other applications: access, endpoints, formats, sync, errors | developers of other applications |
 | [Deployment](docs/deployment.md) | the production server, updates, email, backups, checks | developers, system owner |
 | **[Instructions for AI assistants](AGENTS.md)** | how another AI model should continue the work: rules, definition of done, production cautions | AI coding assistants |
 | [Specification](SPEC.md) | the authoritative rules and acceptance criteria | developers, project owner |

@@ -6,8 +6,11 @@ use App\Models\Site;
 use App\Models\Stock;
 use App\Models\User;
 use App\Support\CurrentSite;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -19,7 +22,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(CurrentSite::class, fn ($app) => new CurrentSite(
             $app['session.store'],
-            $app['auth']->user(),
+            // An API client is not a user; the API never uses the selected site.
+            $app['auth']->user() instanceof User ? $app['auth']->user() : null,
         ));
     }
 
@@ -35,6 +39,10 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // API (SPEC 7a): per token, so one busy client cannot slow down the others.
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute((int) config('ims.api.per_minute'))
+            ->by($request->user() ? 'api-client:'.$request->user()->getAuthIdentifier() : 'ip:'.$request->ip()));
 
         Gate::define('switch-site', fn (User $user) => $user->isAdmin());
         Gate::define('view-audit-log', fn (User $user) => $user->isAdmin());

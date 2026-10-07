@@ -41,3 +41,16 @@ Registering, editing and relocating machines is for administrators: see [chapter
 ![Audit log filtered to stock settings](images/audit-log.png)
 
 Stock movements are not in the audit log; they are in each item's movement history. Passwords are never recorded.
+
+## API clients
+
+**Admin → API clients**: applications that read the inventory through the API (reports, other company systems). They can only read; nothing can be changed through the API.
+
+![API clients](images/api-clients.png)
+
+- **New API client**: a name, **Data from** (one site, or all sites) and notes. **Create and show token** shows the token **once**: copy it and hand it to the application's developer through a safe channel. The developer guide is [API.md](../API.md).
+- **Issue new token** (after ticking **Replace the current token**) when a token is lost or may have been seen by someone else. The old token stops working at once.
+- **Deactivate** with **Edit** → untick **Active (the token works)**. The application is refused from its next request.
+- **Last used** shows when the application last read data. Creating and changing API clients is recorded in the audit log.
+
+![The token, shown once](images/api-client-token.png)

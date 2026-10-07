@@ -4,6 +4,7 @@ namespace App\Models\Concerns;
 
 use App\Enums\AuditAction;
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -67,7 +68,8 @@ trait Auditable
             'entity_id' => $this->getKey(),
             'action' => $action,
             'changes' => $changes,
-            'user_id' => Auth::id(),
+            // Only people: an API client authenticated on the same request is not a user.
+            'user_id' => Auth::user() instanceof User ? Auth::id() : null,
         ]);
     }
 }

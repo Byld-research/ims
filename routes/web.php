@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdjustmentController;
+use App\Http\Controllers\Admin\ApiClientController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ReasonCodeController;
 use App\Http\Controllers\Admin\SiteController as AdminSiteController;
@@ -102,6 +103,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('reason-codes', ReasonCodeController::class)->except(['show', 'destroy'])->parameters(['reason-codes' => 'reasonCode']);
         Route::resource('sites', AdminSiteController::class)->except(['show', 'destroy']);
         Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit.index');
+        Route::resource('api-clients', ApiClientController::class)->except('destroy')->parameters(['api-clients' => 'apiClient']);
+        Route::post('/api-clients/{apiClient}/token', [ApiClientController::class, 'token'])->name('api-clients.token');
     });
 
     // Machine register

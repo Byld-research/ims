@@ -37,6 +37,14 @@ return [
     'ops_email' => env('OPS_EMAIL'),
 
     /*
+    | API (SPEC 7a): requests per minute per token, and the largest page a client may ask for.
+    */
+    'api' => [
+        'per_minute' => (int) env('API_PER_MINUTE', 120),
+        'max_per_page' => 200,
+    ],
+
+    /*
     | Development seed accounts (DevUserSeeder). Never used in production.
     */
     'seed' => [

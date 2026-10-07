@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ApiClient;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\Machine;
@@ -41,6 +42,7 @@ test('an operator is refused on every write route', function () {
         'user' => User::factory()->create()->id,
         'reasonCode' => ReasonCode::query()->create(['applies_to' => 'ADJUSTMENT', 'code' => 'SWEEP', 'label' => 'Sweep'])->id,
         'site' => $site->id,
+        'apiClient' => ApiClient::factory()->create()->id,
         'stockCount' => ($count = StockCount::factory()->create(['site_id' => $site->id]))->id,
         'stockCountLine' => $count->lines()->create(['item_id' => $supplierItem->item_id, 'qty_expected' => 0])->id,
     ];

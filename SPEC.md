@@ -409,12 +409,26 @@ Master data changes only. Stock movements live in `stock_transactions`. For `sto
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| entity | varchar(40) | item, category, supplier, supplier_item, user, stock, machine_type, machine_type_item, machine, reason_code, site |
+| entity | varchar(40) | item, category, supplier, supplier_item, user, stock, machine_type, machine_type_item, machine, reason_code, site, api_client |
 | entity_id | bigint | |
 | action | enum CREATE, UPDATE, DELETE | |
 | changes | json | changed fields only, before and after |
-| user_id | FK users | |
+| user_id | FK users, nullable | the person who made the change; null for changes made by the system |
 | created_at | timestamp | |
+
+### 4.17 api_clients
+
+Applications allowed to read the system through the API (7a). Each has at most one token, stored hashed in `personal_access_tokens` (Laravel Sanctum).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| name | varchar(100) unique | the application or team, e.g. *Power BI reports* |
+| site_id | FK sites, nullable | limits every answer to this site; null = all sites |
+| notes | text, nullable | contact, purpose |
+| is_active | bool | an inactive client's token is refused |
+| created_by | FK users | |
+| created_at, updated_at | timestamp | |
 
 ---
 
@@ -658,6 +672,35 @@ A site selector sits in the header. It defaults to the user's own site, is switc
 
 ---
 
+## 7a. API (read-only, version 1)
+
+Other applications read the system through a JSON API at `/api/v1`. Version 1 **only reads**: there is no endpoint that creates, changes or deletes anything. Writing (issues, receipts, orders) is a later version and will go through the same services and policies as the screens.
+
+**Access**
+
+1. An administrator creates an **API client** under *Admin ▸ API clients*: a name, optionally one site, notes. The application receives a **token**, shown once; afterwards only a new token can be issued, which ends the old one at once.
+2. Every request sends the token as `Authorization: Bearer <token>`. Tokens carry the prefix `ims_` and the single ability `read`. A missing, wrong or replaced token, or an inactive client, gets 401. A browser session never authenticates an API request.
+3. A client limited to a site gets only that site's stock, machines, purchase orders and movements, and only that site in `/sites`. Asking for another site gets 403; a single record at another site gets 404. Shared master data (items, categories, suppliers, machine types) is not limited.
+4. 120 requests per minute per token (`API_PER_MINUTE`); above that 429 with `Retry-After`.
+5. Creating, editing and deactivating API clients is audited (4.16). Managers and operators cannot manage API clients.
+
+**Endpoints** (all GET; lists paged with `page` and `per_page`, at most 200)
+
+| Endpoint | Content | Filters |
+|---|---|---|
+| `/sites` | sites in scope | |
+| `/categories` | categories with full name | |
+| `/items`, `/items/{id}` | items with stock per site in scope; one item also with its suppliers | `q`, `sku`, `category`, `criticality`, `active`, `updated_since`, `site` |
+| `/suppliers`, `/suppliers/{id}` | suppliers; one supplier with the items it supplies, last price and pack size | `active` |
+| `/stock` | stock per item and site: quantity, minimum, location, two-bin, average cost, value, status (`out`, `below_min`, `refill`, `ok`, `no_minimum`), quantity on order | `item`, `sku`, `needs_replenishment`, `two_bin`, `site` |
+| `/machine-types`, `/machine-types/{code}` | machine types; one type with its full parts list | |
+| `/machines`, `/machines/{sku}` | machine register; one machine with the parts list for its revision | `type`, `active`, `site` |
+| `/purchase-orders`, `/purchase-orders/{number}` | orders with lines, outstanding quantities and total | `status` (incl. `open`), `supplier`, `updated_since`, `site` |
+| `/stock-movements` | the ledger, oldest first | `after_id`, `item`, `sku`, `type`, `machine`, `from`, `to`, `site` |
+| `/openapi.yaml` | the OpenAPI 3.1 description; public, holds no data | |
+
+**Formats.** Quantities and money are decimal **strings** exactly as stored (`"412.0000"`), never floats. Timestamps are ISO 8601 UTC; dates `YYYY-MM-DD`. Codes are the stored values: `HIGH`, `PARTIALLY_RECEIVED`, `ISSUE_MACHINE`. *On order* follows 5.5: quantities outstanding on sent orders, drafts excluded. `after_id` on movements gives an incremental feed, because movements never change.
+
 ## 8. Dashboard
 
 Scoped to the selected site; administrators may switch to a consolidated view.
@@ -788,7 +831,7 @@ Do not build any of this, even if it seems natural:
 - machines located outside the US sites, and stock held outside them
 - supplier portals, external access of any kind
 - reorder point calculations, forecasting, automatic order generation
-- a REST API or mobile application
+- an API that writes, and a mobile application (a read-only API is in scope: 7a)
 
 ---
 
@@ -878,6 +921,17 @@ Each of these must be covered by an automated test.
 36. A manager at BPC002 cannot include a BPC001 item in a quick order; an operator sees no tick boxes and is refused.
 37. The dashboard shows a draft order's number and status next to an item on it.
 
+**Added in revision 1.10 — read-only API**
+
+38. A request without a token, with a wrong token, or with only a logged-in browser session gets 401.
+39. After an administrator issues a new token, the old token gets 401 at once; after the client is deactivated, its token gets 401.
+40. Every API route is GET only; a POST to an API route gets 405 and changes nothing.
+41. `/items?sku=SP-10001` returns the item with its Colorado stock as decimal strings (`"1.000"`, `"412.0000"`), status `below_min` when 1 is in stock against a minimum of 2.
+42. A client limited to BPC002 sees only BPC002 stock, sites and machines; `?site=BPC001` gets 403 and machine 003C gets 404.
+43. `/stock-movements?after_id=N` returns only movements recorded after movement N, oldest first.
+44. The request after the per-minute limit gets 429 with `Retry-After`.
+45. An administrator creates an API client and sees its token once; reopening the page does not show it again; the creation is in the audit log.
+
 ---
 
 ## Change history
@@ -885,6 +939,7 @@ Each of these must be covered by an automated test.
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-10-05 | Initial build specification |
+| 1.10 | 2026-10-07 | Read-only API v1 (7a) with API clients (4.17) managed by administrators, tokens, site scope, rate limit, OpenAPI description; out-of-scope list narrowed to writing APIs and mobile apps; audit `user_id` nullable for system changes; criteria 38–45 |
 | 1.9 | 2026-10-06 | Quick order from the dashboard (5.3a): tick items, review suggested supplier, quantity and price, create one draft per site and supplier; orders in progress, drafts included, shown next to each item; criteria 34–37 |
 | 1.8 | 2026-10-06 | Criticality High, Normal, Low (was A, B, C), stored as HIGH, NORMAL, LOW; stock status *Low* renamed *Below min* to avoid a clash |
 | 1.7 | 2026-10-06 | Interface names: Inventory, Two-bin items (was Kanban), Stock counts, Min levels & locations; shelf *bin* shown as *Location*; terms added to 1a; database names unchanged |

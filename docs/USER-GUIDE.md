@@ -38,7 +38,7 @@ Your role is shown under your name in the top-right menu.
 | Min levels & locations | — | own site | every site |
 | Items, categories, suppliers, parts lists | — | create and edit | create and edit |
 | Quick order from the dashboard | — | own site | every site |
-| Users, sites, reason codes, audit log | — | — | yes |
+| Users, sites, reason codes, audit log, API clients | — | — | yes |
 | Switch to the other site or *All sites* | — | — | yes |
 
 Managers and operators are fixed to their own site but can **read** the other site's stock: the inventory has a column per site.
@@ -369,6 +369,26 @@ To remove access, untick **Active (can log in)** and **Save**. Nothing is delete
 
 ![Audit log](user-guide/images/audit-log.png)
 
+### Give another application access (API clients)
+
+Other applications (Power BI, a company system) can **read** the inventory through the API. They never change anything.
+
+1. **Admin ▸ API clients ▸ New API client**.
+2. **Name**: the application or team, e.g. `Power BI reports`. **Data from**: one site, or *All sites*. **Notes**: contact and purpose.
+3. **Create and show token**.
+4. **Copy** the token and pass it to the application's developer through a safe channel (a password manager, not plain email). It is shown **only once**.
+5. Point the developer to the API guide: [API.md](API.md).
+
+![New API client](user-guide/images/api-client-new.png)
+
+![The token, shown once](user-guide/images/api-client-token.png)
+
+- **Lost or exposed token:** open the client → tick **Replace the current token** → **Issue new token**. The old token stops working at once.
+- **End access:** **Edit** → untick **Active (the token works)** → **Save**.
+- **Last used** on the list shows whether the application is still reading.
+
+![API clients](user-guide/images/api-clients.png)
+
 ### Reset an administrator's password without email
 
 From a computer with server access (see [deployment.md](deployment.md)):
@@ -403,6 +423,7 @@ ssh -t -i ~/.ssh/vps_ims -o IdentitiesOnly=yes ubuntu@144.217.90.113 \
 | Users | **Admin ▸ Users** | [9](user-guide/09-administration.md) |
 | Digest hour per site | **Admin ▸ Sites** | [9](user-guide/09-administration.md) |
 | Who changed what | **Admin ▸ Audit log** | [9](user-guide/09-administration.md) |
+| Give an application read access (API) | **Admin ▸ API clients** | [9](user-guide/09-administration.md#api-clients) |
 | A message you don't understand | | [11](user-guide/11-messages.md) |
 
 ## Detailed chapters

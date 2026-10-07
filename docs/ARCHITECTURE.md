@@ -13,6 +13,7 @@ For developers who maintain or extend the application. [SPEC.md](../SPEC.md) is 
 7. [Concurrency](#7-concurrency)
 8. [Money and quantities](#8-money-and-quantities)
 9. [Authorisation, sites and navigation](#9-authorisation-sites-and-navigation)
+9a. [API](#9a-api)
 10. [User interface](#10-user-interface)
 11. [Services, commands and the scheduler](#11-services-commands-and-the-scheduler)
 12. [Rules that are easy to break](#12-rules-that-are-easy-to-break)
@@ -28,7 +29,7 @@ For developers who maintain or extend the application. [SPEC.md](../SPEC.md) is 
 | Layer | Choice | Notes |
 |---|---|---|
 | Language | PHP 8.3+ (`composer.json`), production runs **8.5** | `bcmath`, `intl`, `pdo_mysql` required |
-| Framework | **Laravel 13** | Breeze (Blade) for authentication screens |
+| Framework | **Laravel 13** | Breeze (Blade) for authentication screens; **Sanctum** for API tokens |
 | Database | **MariaDB** 10.6+ (production 11.8), InnoDB, `utf8mb4_unicode_ci` | CHECK constraints and triggers are part of the design; SQLite is not supported |
 | Front end | Blade, **Tailwind CSS 3**, **Alpine.js 3**, built with **Vite** | no SPA, no API; pages are server-rendered |
 | Tests | **Pest** 5 (PHPUnit) | run against MariaDB, including real parallel processes |
@@ -36,7 +37,7 @@ For developers who maintain or extend the application. [SPEC.md](../SPEC.md) is 
 | Mail | Laravel Mail over SMTP | production: Microsoft 365 Direct Send |
 | Hosting | nginx + PHP-FPM on Ubuntu, cron for the scheduler | see [deployment.md](deployment.md) |
 
-Size: about 8,300 lines of PHP in `app/`, 80 Blade views, 108 routes, 280 tests (348 with datasets).
+Size: about 9,200 lines of PHP in `app/`, 83 Blade views, about 130 routes (15 of them API), 366 tests.
 
 ## 2. Local set-up
 
@@ -63,8 +64,9 @@ app/
   Console/Commands/   ims:* commands: backup, restore-test, verify-stock, send-digests, create-admin
   Enums/              Role, TransactionType, PurchaseOrderStatus, StockCountStatus, Criticality, ReasonCodeScope, AuditAction
   Exceptions/         StockException, PurchaseOrderException, StockCountException (user-facing, with a form field)
-  Http/Controllers/   one controller per screen; Admin/ for administration; Auth/ from Breeze
-  Http/Middleware/    EnsureUserIsActive, SecurityHeaders
+  Http/Controllers/   one controller per screen; Admin/ for administration; Auth/ from Breeze; Api/V1/ for the API
+  Http/Middleware/    EnsureUserIsActive, SecurityHeaders, EnsureApiClient
+  Http/Resources/     JSON shapes of the API
   Http/Requests/      Form Requests: validation and authorisation of every write
   Mail/               DailyDigest
   Models/             Eloquent models; Concerns/Auditable
@@ -82,8 +84,10 @@ database/
 resources/
   views/              Blade pages per area; components/ for shared pieces
   css/app.css         Tailwind layers, component classes (btn, card, table, badge), status colour tokens
+  api/openapi.yaml    OpenAPI 3.1 description of the API, served at /api/v1/openapi.yaml
 routes/
-  web.php             every route, behind auth + active-user middleware
+  web.php             every screen route, behind auth + active-user middleware
+  api.php             the read-only API v1, behind token + rate limit
   console.php         the schedule
 scripts/deploy.sh     production deployment
 tests/
@@ -162,7 +166,9 @@ erDiagram
 | `stock_counts`, `stock_count_lines` | count header with status; lines with expected/counted qty | `reference` unique; unique (count, item) |
 | `reason_codes` | reasons for adjustments and general issues; `is_system` for COUNT and OPENING | unique (`applies_to`, `code`) |
 | `number_sequences` | counters per prefix and year | |
-| `audit_logs` | master data changes: entity, id, action, before/after JSON, user | |
+| `audit_logs` | master data changes: entity, id, action, before/after JSON, user (null for system changes) | |
+| `api_clients` | applications reading through the API: name, optional `site_id` scope, `is_active`, creator | `name` unique |
+| `personal_access_tokens` | Sanctum tokens of API clients, hashed, with abilities and `last_used_at` | |
 
 Enums are stored as strings and mapped by backed enums in `app/Enums`. Nothing is hard-deleted: master data has `is_active`.
 
@@ -211,6 +217,17 @@ Pest runs every test inside one transaction, so it cannot test locks. `tests/Con
 - **Inactive users** are logged out by `EnsureUserIsActive` on their next request.
 - **Navigation** is data: `config/navigation.php` defines sections (Dashboard, Stock, Purchasing, Machines, Admin) and the action button (Issue, Transfer in, Adjust stock). A link appears when its route exists and the user passes its `can`. `MainNavigation` builds the menu.
 - **Security headers** (`SecurityHeaders`): X-Frame-Options DENY, nosniff, Referrer-Policy same-origin, Permissions-Policy, HSTS over HTTPS.
+
+## 9a. API
+
+Read-only JSON API at `/api/v1` (SPEC 7a). Consumer guide: [API.md](API.md); contract: `resources/api/openapi.yaml`.
+
+- **Clients and tokens.** `App\Models\ApiClient` (Authenticatable, `HasApiTokens`, `Auditable`) holds at most one Sanctum token with the ability `read`, prefixed `ims_`. `ApiClient::issueToken()` deletes the old token and returns the new plain text, which is flashed once to the admin screen (`Admin\ApiClientController`). Sanctum's `guard` is `[]`, so a browser session never authenticates the API.
+- **Pipeline.** `routes/api.php` → `auth:sanctum` → `api.client:read` (`EnsureApiClient`: active client, token ability) → `throttle:api` (per client, `ims.api.per_minute`) → `Api\V1\*Controller` → `Http\Resources\*Resource`.
+- **Site scope.** `Api\V1\Controller::siteId()` returns `?site=` or the client's own site and refuses another site with 403; `ensureInScope()` turns single records at another site into 404. Shared master data is not scoped.
+- **Shapes.** Decimals are returned as stored strings; timestamps `toIso8601ZuluString()`; enums by value. `StockResource` computes the dashboard status and takes on-order quantities from `PurchaseOrderLine::onOrder()` set by the controller.
+- **Guards elsewhere.** `Auditable` records `user_id` only for a `User`, and `CurrentSite` ignores a non-user, because the Sanctum guard becomes the default guard during an API request.
+- **Writing** is out of scope for v1. A future write endpoint must call the same services (`StockService`, `PurchaseOrderService`) inside their transactions, check the same policies with a role on the client, and accept an idempotency key.
 
 ## 10. User interface
 
@@ -264,6 +281,7 @@ A failing scheduled job mails `OPS_EMAIL`.
 16. **`WriteRoutesTest` sweeps every write route as an operator**; a new route parameter needs a fixture there.
 17. **A UI change updates the user documentation** (`docs/USER-GUIDE.md`, `docs/user-guide/`, screenshots; `11-messages.md` quotes messages verbatim) and, for behaviour, `SPEC.md`.
 18. **Every business rule and acceptance criterion has a feature test.**
+19. **The API v1 only reads.** Every API route is GET (asserted by `ApiTest`); new fields go into the Resource and `openapi.yaml` together.
 
 ## 13. Testing
 
@@ -291,6 +309,7 @@ php artisan test                                   # Unit, Feature and Concurren
 | `BACKUP_PATH`, `BACKUP_KEEP_DAYS`, `BACKUP_RESTORE_TEST_DATABASE` | backups |
 | `ADMIN_DIGEST_HOUR`, `ADMIN_DIGEST_TIMEZONE` | administrators' all-sites digest |
 | `SKU_PATTERN`, `SKU_PATTERN_HINT` | SKU validation once the numbering scheme is agreed |
+| `API_PER_MINUTE`, `SANCTUM_TOKEN_PREFIX` | API rate limit per client (120) and token prefix (`ims_`) |
 | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, `SEED_MANAGER_PASSWORD` | development accounts only; empty in production |
 
 ## 15. Deployment and operations
@@ -312,5 +331,7 @@ The script refuses uncommitted changes, opens one shared SSH connection with ret
 **Add a master data model.** Migration with `is_active`, model with `Auditable`, policy, Form Request, CRUD screens, audit log entity label, tests.
 
 **Change a business rule.** Update `SPEC.md` first (rule, acceptance criterion, change history), then code and tests, then the user documentation.
+
+**Add an API endpoint.** A GET route in the `v1` group of `routes/api.php`, a method on an `Api\V1` controller that applies `siteId()`/`ensureInScope()` to site-bound data and eager-loads every relation, a Resource, the path and schema in `resources/api/openapi.yaml`, a row in [API.md](API.md) and SPEC 7a, and tests in `ApiTest`.
 
 **Rename something on screen.** Change the label only; keep database and route names. Record the mapping in SPEC 1a, update docs and screenshots.

@@ -12,7 +12,8 @@ An inventory management web application for two US manufacturing sites of BPC: *
 2. **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: stack, layout, data model, ledger, locking, testing, how-to recipes.
 3. **[docs/PROJECT.md](docs/PROJECT.md)**: purpose, processes, decisions and their reasons, status, risks.
 4. **[docs/deployment.md](docs/deployment.md)**: the production server.
-5. User documentation, which you must keep in sync: [docs/USER-GUIDE.md](docs/USER-GUIDE.md), [docs/user-guide/](docs/user-guide/), [docs/FAQ.md](docs/FAQ.md).
+5. **[docs/API.md](docs/API.md)** and `resources/api/openapi.yaml`: the read-only API v1.
+6. User documentation, which you must keep in sync: [docs/USER-GUIDE.md](docs/USER-GUIDE.md), [docs/user-guide/](docs/user-guide/), [docs/FAQ.md](docs/FAQ.md).
 
 `IMS_USA_documentation.md` and `IMS_USA_spec_mvp.md`, if present, are superseded background documents.
 
@@ -58,6 +59,7 @@ Laravel 13, PHP 8.3+ (production 8.5), MariaDB (InnoDB, utf8mb4_unicode_ci), Bre
 - **Pick items with `<x-item-picker>`**, backed by `items.search`.
 - **`tests/Feature/WriteRoutesTest.php` sweeps every authenticated write route as an operator.** A new route parameter needs a fixture there. Routes like `/purchase-orders/quick` must be registered before `/purchase-orders/{purchaseOrder}`.
 - **Every business rule in SPEC 5 and every acceptance criterion in SPEC 13 needs a feature test.** Name the criterion in the test title.
+- **The API v1 only reads** (SPEC 7a). Keep every `routes/api.php` route GET. Scope site-bound data with `Api\V1\Controller::siteId()` / `ensureInScope()`. A new field goes into its Resource, `resources/api/openapi.yaml` and `docs/API.md` together. Code that runs on API requests must not assume `Auth::user()` is a `User`: it can be an `ApiClient`.
 - **Blade:** use block `@php … @endphp`; an inline `@php(...)` before a later block gets swallowed. Don't reuse a view variable name that the page already uses further down (e.g. `$orders` on the dashboard).
 
 ## 7. Definition of done for a change
@@ -92,4 +94,4 @@ Laravel 13, PHP 8.3+ (production 8.5), MariaDB (InnoDB, utf8mb4_unicode_ci), Bre
 
 ## 10. Build progress
 
-All eight stages of SPEC 12 are complete, plus, after go-live, the quick order from the dashboard (SPEC 5.3a) with orders in progress per item. SPEC version 1.9. Values still to come from the business (SPEC 10): SKU numbering scheme, parts lists per machine type, initial minimum levels, opening stock count.
+All eight stages of SPEC 12 are complete, plus, after go-live, the quick order from the dashboard (SPEC 5.3a) with orders in progress per item, and the read-only API v1 (SPEC 7a). SPEC version 1.10. Values still to come from the business (SPEC 10): SKU numbering scheme, parts lists per machine type, initial minimum levels, opening stock count.

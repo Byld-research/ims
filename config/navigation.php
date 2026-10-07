@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ApiClient;
 use App\Models\MachineType;
 use App\Models\ReasonCode;
 use App\Models\Site;
@@ -53,6 +54,8 @@ return [
                 'can' => 'viewAny', 'model' => ReasonCode::class],
             ['label' => 'Audit log', 'route' => 'admin.audit.index', 'active' => ['admin.audit.*'],
                 'can' => 'view-audit-log', 'description' => 'Who changed which master data'],
+            ['label' => 'API clients', 'route' => 'admin.api-clients.index', 'active' => ['admin.api-clients.*'],
+                'can' => 'viewAny', 'model' => ApiClient::class, 'description' => 'Applications reading data through the API'],
         ]],
     ],
 

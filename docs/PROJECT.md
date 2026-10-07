@@ -8,6 +8,7 @@ The whole project on one page: why it exists, what it covers, how the work flows
 | [USER-GUIDE.md](USER-GUIDE.md) and [user-guide/](user-guide/) | people using the application, by role |
 | [FAQ.md](FAQ.md) | the 25 questions users ask most |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | developers: stack, architecture, data model, rules, tests |
+| [API.md](API.md) | developers of other applications reading through the API |
 | [deployment.md](deployment.md) | the production server and how to update it |
 | [../AGENTS.md](../AGENTS.md) | AI coding assistants continuing the work |
 | [../SPEC.md](../SPEC.md) | the authoritative specification: every rule and acceptance criterion |
@@ -54,8 +55,9 @@ A second purpose grows over time: every item taken from stock is recorded agains
 - Cycle counting with a blind count sheet.
 - Dashboard, a daily email digest, CSV export of every list, an audit log of master data changes.
 - Users with three roles, two sites, and room for more sites without code changes.
+- A **read-only API** for other applications (reporting tools, company systems), with tokens managed by administrators.
 
-**Out of scope, deliberately** (SPEC section 11): accounting, invoices and payments; freight, duty and landed cost; currencies other than USD; batch and serial numbers, expiry dates; barcodes and labels; maintenance schedules and work orders; tools issued to people; requests raised by operators; in-transit stock; bin hierarchies; forecasting and automatic ordering; supplier portals; an API or mobile app; machines and stock outside the US sites (machines in Poland are not registered until they are installed in the US).
+**Out of scope, deliberately** (SPEC section 11): accounting, invoices and payments; freight, duty and landed cost; currencies other than USD; batch and serial numbers, expiry dates; barcodes and labels; maintenance schedules and work orders; tools issued to people; requests raised by operators; in-transit stock; bin hierarchies; forecasting and automatic ordering; supplier portals; an API that writes, and a mobile app; machines and stock outside the US sites (machines in Poland are not registered until they are installed in the US).
 
 The application is **not** an ERP, MRP or accounting system.
 
@@ -227,7 +229,8 @@ Checklist with owners: [user-guide/10-go-live.md](user-guide/10-go-live.md).
 | **Machines ▸ Machines** | machine register with revision and site; each machine's parts list and consumption history | everyone reads; administrators register, edit and relocate machines |
 | **Machines ▸ Machine types** | parts lists per type and revision, CSV import | managers, administrators |
 | **Issue ▾** | Issue (to a machine or general use), Transfer in, Adjust stock | managers (own site), administrators |
-| **Admin** | users, sites (time zone, digest hour), reason codes, audit log | administrators |
+| **Admin** | users, sites (time zone, digest hour), reason codes, audit log, API clients and their tokens | administrators |
+| **API** (`/api/v1`) | read-only JSON for other applications: sites, categories, items, suppliers, stock, machine types, machines, purchase orders, stock movements; see [API.md](API.md) | applications with a token |
 | **Everywhere** | CSV export of every list; site selector (administrators can switch to *All sites*); profile with password and digest switch | everyone |
 
 ## 7. Rules the system enforces
@@ -258,6 +261,7 @@ Checklist with owners: [user-guide/10-go-live.md](user-guide/10-go-live.md).
 | SSH password login kept on the VPS | The owner's choice; key login is used for deployments, fail2ban limits guessing |
 | Email through Microsoft 365 *Direct Send* | No extra account or password; all users have @byldinc.com addresses. Mail reaches only @byldinc.com. |
 | Backups: nightly database dump on the server plus OVH's daily VPS backup in another data centre | A quick restore of the data, and protection against losing the whole server |
+| API version 1 reads only, one token per application, optionally limited to one site | No application was waiting to write; reading covers reports and integrations without any risk to stock. Writing can follow when a real application needs it. |
 
 ## 9. Production environment
 
@@ -285,13 +289,14 @@ Details and procedures: [deployment.md](deployment.md).
 | 2026-10-06 | Plain menu names; criticality High/Normal/Low |
 | 2026-10-06 | Production on the OVH VPS at ims.byldinc.com; first administrator created; data entry starts |
 | 2026-10-06 | Quick order from the dashboard with orders in progress per item; email via Microsoft 365; deployment script hardened |
-| 2026-10-07 | Post-project documentation: this file, architecture, user guide by role, FAQ, instructions for AI assistants |
+| 2026-10-07 | Post-project documentation: this file, architecture, user guide by role, FAQ, instructions for AI assistants; BYLD logo |
+| 2026-10-07 | Read-only API v1 with API clients and tokens (SPEC 1.10) |
 
 The specification's change history (SPEC versions 1.0–1.9) records every change of rules.
 
 ## 11. Status, open items and risks
 
-**Status:** in production, all eight build stages and the quick order complete, 348 automated tests passing.
+**Status:** in production, all eight build stages, the quick order and the read-only API complete, 366 automated tests passing.
 
 **Values still to be supplied** (SPEC section 10): the SKU numbering scheme, the parts lists per machine type (starting with type C), the initial minimum levels, the opening stock count.
 
@@ -302,6 +307,7 @@ The specification's change history (SPEC versions 1.0–1.9) records every chang
 | Microsoft 365 *Reject Direct Send* switched on by an M365 administrator | Digest and password reset emails stop | Switch to an SMTP relay connector or a mail service (see deployment.md) |
 | A user without an @byldinc.com address | That user gets no email | Give them a company address, or change the mail set-up |
 | SSH password login open to the internet | Constant guessing attempts | Strong password, fail2ban; key-only login is one setting away |
+| An API token leaks | Someone outside reads stock and prices (never changes them) | Tokens are read-only and per application; replace a token in one click; check *Last used* under Admin ▸ API clients |
 | One developer knows the system | Slow changes if they are unavailable | This documentation, ARCHITECTURE.md and AGENTS.md |
 
 ## 12. Possible next steps
@@ -313,3 +319,4 @@ Not agreed, listed so they are not lost:
 - Quick order from the inventory list (*Below minimum* filter), not only from the dashboard.
 - A printable or emailable purchase order document for suppliers.
 - Barcode labels for locations and items (currently out of scope).
+- API version 2 with writing (e.g. issues from a shop-floor tablet), once an application needs it.

@@ -1,0 +1,570 @@
+openapi: 3.1.0
+info:
+  title: BPC Inventory System API
+  version: 1.0.0
+  summary: Read-only access to items, stock, machines, purchase orders and stock movements.
+  description: |
+    Read-only API of the BPC Inventory System (SPEC 7a).
+
+    **Authentication.** Every request except this document needs an API token in the header
+    `Authorization: Bearer <token>`. Tokens are issued by an administrator under
+    **Admin ▸ API clients**; a token is shown once. A client may be limited to one site: every
+    answer is then limited to that site, and asking for another site returns 403.
+
+    **Formats.** JSON, UTF-8. Quantities (3 decimals) and money (USD, 4 decimals) are
+    **strings**, so no precision is lost: parse them as decimals, never as floats. Timestamps
+    are ISO 8601 in UTC (`2026-10-07T09:15:00Z`); dates are `YYYY-MM-DD`.
+
+    **Paging.** Lists are paged: `page` and `per_page` (default 50, at most 200). The answer has
+    `data`, `links` (first, last, prev, next) and `meta` (current_page, last_page, total).
+
+    **Limits.** 120 requests per minute per token; above that the answer is 429 with
+    `Retry-After`.
+
+    **Incremental sync.** Stock movements are never changed or deleted. Store the highest `id`
+    you received and ask `/stock-movements?after_id=<id>` next time. Items and purchase orders
+    accept `updated_since`.
+servers:
+  - url: https://ims.byldinc.com/api/v1
+security:
+  - bearerToken: []
+tags:
+  - name: Catalogue
+  - name: Stock
+  - name: Machines
+  - name: Purchasing
+paths:
+  /sites:
+    get:
+      tags: [Catalogue]
+      summary: Sites
+      responses:
+        '200':
+          description: Sites in the client's scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Site' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /categories:
+    get:
+      tags: [Catalogue]
+      summary: Categories (two levels)
+      responses:
+        '200':
+          description: All categories.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Category' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /items:
+    get:
+      tags: [Catalogue]
+      summary: Items with their stock per site
+      parameters:
+        - { name: q, in: query, schema: { type: string }, description: Part of the SKU, name or manufacturer part number. }
+        - { name: sku, in: query, schema: { type: string }, description: Exact SKU. }
+        - { name: category, in: query, schema: { type: integer }, description: Category id; a top-level group includes its subcategories. }
+        - { name: criticality, in: query, schema: { type: string, enum: [HIGH, NORMAL, LOW] } }
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: updated_since, in: query, schema: { type: string, format: date-time } }
+        - { $ref: '#/components/parameters/site' }
+        - { $ref: '#/components/parameters/page' }
+        - { $ref: '#/components/parameters/per_page' }
+      responses:
+        '200':
+          description: A page of items.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Item' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Invalid' }
+  /items/{id}:
+    get:
+      tags: [Catalogue]
+      summary: One item, with stock per site and its suppliers
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+        - { $ref: '#/components/parameters/site' }
+      responses:
+        '200':
+          description: The item.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Item' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /suppliers:
+    get:
+      tags: [Purchasing]
+      summary: Suppliers
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/page' }
+        - { $ref: '#/components/parameters/per_page' }
+      responses:
+        '200':
+          description: A page of suppliers.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Supplier' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /suppliers/{id}:
+    get:
+      tags: [Purchasing]
+      summary: One supplier with the items it supplies, last prices and pack sizes
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: The supplier.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Supplier' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /stock:
+    get:
+      tags: [Stock]
+      summary: Stock per item and site
+      parameters:
+        - { name: item, in: query, schema: { type: integer }, description: Item id. }
+        - { name: sku, in: query, schema: { type: string }, description: Exact item SKU. }
+        - { name: needs_replenishment, in: query, schema: { type: boolean }, description: Only rows below their minimum, or two-bin items down to one bin. }
+        - { name: two_bin, in: query, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/site' }
+        - { $ref: '#/components/parameters/page' }
+        - { $ref: '#/components/parameters/per_page' }
+      responses:
+        '200':
+          description: A page of stock rows, by SKU then site.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Stock' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /machine-types:
+    get:
+      tags: [Machines]
+      summary: Machine types
+      responses:
+        '200':
+          description: All machine types, without parts lists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/MachineType' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /machine-types/{code}:
+    get:
+      tags: [Machines]
+      summary: One machine type with its full parts list
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string, example: C } }
+      responses:
+        '200':
+          description: The machine type.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/MachineType' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /machines:
+    get:
+      tags: [Machines]
+      summary: Machine register
+      parameters:
+        - { name: type, in: query, schema: { type: string, example: C }, description: Machine type letter. }
+        - { name: active, in: query, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/site' }
+      responses:
+        '200':
+          description: Machines in the client's scope.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/Machine' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /machines/{sku}:
+    get:
+      tags: [Machines]
+      summary: One machine with the parts list for its revision
+      parameters:
+        - { name: sku, in: path, required: true, schema: { type: string, example: 004C } }
+      responses:
+        '200':
+          description: The machine.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Machine' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /purchase-orders:
+    get:
+      tags: [Purchasing]
+      summary: Purchase orders with their lines, newest first
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [open, DRAFT, ORDERED, CONFIRMED, SHIPPED, PARTIALLY_RECEIVED, RECEIVED, CLOSED, CANCELLED] }
+          description: "`open` = not closed and not cancelled."
+        - { name: supplier, in: query, schema: { type: integer }, description: Supplier id. }
+        - { name: updated_since, in: query, schema: { type: string, format: date-time } }
+        - { $ref: '#/components/parameters/site' }
+        - { $ref: '#/components/parameters/page' }
+        - { $ref: '#/components/parameters/per_page' }
+      responses:
+        '200':
+          description: A page of orders.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/PurchaseOrder' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /purchase-orders/{number}:
+    get:
+      tags: [Purchasing]
+      summary: One purchase order
+      parameters:
+        - { name: number, in: path, required: true, schema: { type: string, example: PO-2026-0007 } }
+      responses:
+        '200':
+          description: The order.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PurchaseOrder' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /stock-movements:
+    get:
+      tags: [Stock]
+      summary: Stock movement history, oldest first
+      description: Every receipt, issue, transfer and adjustment. Append-only; use `after_id` to fetch only new movements.
+      parameters:
+        - { name: after_id, in: query, schema: { type: integer }, description: Only movements with a higher id. }
+        - { name: item, in: query, schema: { type: integer } }
+        - { name: sku, in: query, schema: { type: string } }
+        - { name: type, in: query, schema: { $ref: '#/components/schemas/MovementType' } }
+        - { name: machine, in: query, schema: { type: string, example: 004C } }
+        - { name: from, in: query, schema: { type: string, format: date }, description: On or after this date (UTC). }
+        - { name: to, in: query, schema: { type: string, format: date }, description: On or before this date (UTC). }
+        - { $ref: '#/components/parameters/site' }
+        - { $ref: '#/components/parameters/page' }
+        - { $ref: '#/components/parameters/per_page' }
+      responses:
+        '200':
+          description: A page of movements.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Page'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/StockMovement' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+components:
+  securitySchemes:
+    bearerToken:
+      type: http
+      scheme: bearer
+      description: Token from Admin ▸ API clients, starting with "ims_".
+  parameters:
+    site:
+      name: site
+      in: query
+      schema: { type: string, example: BPC002 }
+      description: Site code. Defaults to the client's site, or all sites.
+    page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    per_page:
+      name: per_page
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  responses:
+    Unauthenticated:
+      description: Missing, wrong or revoked token, or the client is inactive.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: The token is limited to another site, or lacks the ability.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such record in the client's scope.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Invalid:
+      description: A query parameter is invalid.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  errors: { type: object, additionalProperties: { type: array, items: { type: string } } }
+  schemas:
+    Decimal:
+      type: string
+      pattern: '^-?\d+\.\d+$'
+      description: Exact decimal as a string.
+      example: '412.0000'
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+    Page:
+      type: object
+      properties:
+        links:
+          type: object
+          properties:
+            first: { type: [string, 'null'] }
+            last: { type: [string, 'null'] }
+            prev: { type: [string, 'null'] }
+            next: { type: [string, 'null'] }
+        meta:
+          type: object
+          properties:
+            current_page: { type: integer }
+            last_page: { type: integer }
+            per_page: { type: integer }
+            total: { type: integer }
+    Site:
+      type: object
+      properties:
+        code: { type: string, example: BPC002 }
+        name: { type: string, example: BPC Colorado }
+        state: { type: string, example: CO }
+        timezone: { type: string, example: America/Denver }
+        is_active: { type: boolean }
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        full_name: { type: string, example: Spare Parts / Cutting }
+        parent_id: { type: [integer, 'null'] }
+        is_structural: { type: boolean, description: Top-level group; items go into its subcategories. }
+    ItemRef:
+      type: object
+      properties:
+        id: { type: integer }
+        sku: { type: string, example: SP-10001 }
+        name: { type: string }
+        uom: { type: string, example: pc }
+    Item:
+      type: object
+      properties:
+        id: { type: integer }
+        sku: { type: string, example: SP-10001 }
+        name: { type: string, example: Saw blade 18" carbide, 72T }
+        description: { type: [string, 'null'] }
+        category:
+          type: object
+          properties:
+            id: { type: integer }
+            full_name: { type: string }
+        uom: { type: string, example: pc }
+        criticality: { type: [string, 'null'], enum: [HIGH, NORMAL, LOW, null] }
+        manufacturer: { type: [string, 'null'] }
+        mpn: { type: [string, 'null'] }
+        drawing_no: { type: [string, 'null'] }
+        is_active: { type: boolean }
+        updated_at: { type: string, format: date-time }
+        stock: { type: array, items: { $ref: '#/components/schemas/Stock' } }
+        suppliers:
+          type: array
+          description: Only on /items/{id}.
+          items:
+            type: object
+            properties:
+              supplier_id: { type: integer }
+              supplier: { type: string }
+              supplier_sku: { type: [string, 'null'] }
+              last_price: { oneOf: [ { $ref: '#/components/schemas/Decimal' }, { type: 'null' } ] }
+              pack_size: { $ref: '#/components/schemas/Decimal' }
+    Stock:
+      type: object
+      properties:
+        item: { $ref: '#/components/schemas/ItemRef', description: Only on /stock. }
+        site: { type: string, example: BPC002 }
+        qty: { $ref: '#/components/schemas/Decimal' }
+        min_level: { $ref: '#/components/schemas/Decimal' }
+        location: { type: [string, 'null'], example: CO-SP01 }
+        is_two_bin: { type: boolean }
+        qty_per_bin: { oneOf: [ { $ref: '#/components/schemas/Decimal' }, { type: 'null' } ] }
+        avg_cost: { $ref: '#/components/schemas/Decimal' }
+        value: { $ref: '#/components/schemas/Decimal' }
+        status:
+          type: string
+          enum: [out, below_min, refill, ok, no_minimum]
+          description: out = nothing left and needs replenishment; below_min = under the minimum; refill = two-bin item down to one bin; no_minimum = no minimum set.
+        on_order: { $ref: '#/components/schemas/Decimal', description: Outstanding on orders sent to suppliers (drafts excluded). Never added to qty. }
+        last_counted_at: { type: [string, 'null'], format: date-time }
+    Supplier:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        contact_email: { type: [string, 'null'] }
+        contact_phone: { type: [string, 'null'] }
+        lead_time_days: { type: [integer, 'null'] }
+        is_active: { type: boolean }
+        items:
+          type: array
+          description: Only on /suppliers/{id}.
+          items:
+            type: object
+            properties:
+              item_id: { type: integer }
+              sku: { type: string }
+              name: { type: string }
+              supplier_sku: { type: [string, 'null'] }
+              last_price: { oneOf: [ { $ref: '#/components/schemas/Decimal' }, { type: 'null' } ] }
+              pack_size: { $ref: '#/components/schemas/Decimal' }
+    PartsListLine:
+      type: object
+      properties:
+        item: { $ref: '#/components/schemas/ItemRef' }
+        revision: { type: [string, 'null'], description: Null = every revision. }
+        reference: { type: [string, 'null'] }
+        qty_per_machine: { oneOf: [ { $ref: '#/components/schemas/Decimal' }, { type: 'null' } ] }
+        is_consumable: { type: boolean }
+        note: { type: [string, 'null'] }
+    MachineType:
+      type: object
+      properties:
+        code: { type: string, example: C }
+        name: { type: string, example: Truss Saw }
+        description: { type: [string, 'null'] }
+        last_serial: { type: integer }
+        is_active: { type: boolean }
+        parts_list: { type: array, items: { $ref: '#/components/schemas/PartsListLine' }, description: Only on /machine-types/{code}. }
+    Machine:
+      type: object
+      properties:
+        sku: { type: string, example: 004C }
+        type:
+          type: object
+          properties:
+            code: { type: string }
+            name: { type: string }
+        name: { type: string }
+        revision: { type: string, example: '2.0' }
+        site: { type: string, example: BPC002 }
+        is_active: { type: boolean }
+        parts_list: { type: array, items: { $ref: '#/components/schemas/PartsListLine' }, description: Only on /machines/{sku}; lines for this machine's revision. }
+    PurchaseOrder:
+      type: object
+      properties:
+        number: { type: string, example: PO-2026-0007 }
+        status: { type: string, enum: [DRAFT, ORDERED, CONFIRMED, SHIPPED, PARTIALLY_RECEIVED, RECEIVED, CLOSED, CANCELLED] }
+        supplier:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+        site: { type: string }
+        ordered_at: { type: [string, 'null'], format: date }
+        confirmed_at: { type: [string, 'null'], format: date }
+        eta: { type: [string, 'null'], format: date }
+        shipped_at: { type: [string, 'null'], format: date }
+        tracking_ref: { type: [string, 'null'] }
+        closed_at: { type: [string, 'null'], format: date }
+        total: { $ref: '#/components/schemas/Decimal' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              item: { $ref: '#/components/schemas/ItemRef' }
+              qty_ordered: { $ref: '#/components/schemas/Decimal' }
+              qty_received: { $ref: '#/components/schemas/Decimal' }
+              qty_outstanding: { $ref: '#/components/schemas/Decimal' }
+              unit_price: { $ref: '#/components/schemas/Decimal' }
+              value: { $ref: '#/components/schemas/Decimal' }
+              is_closed: { type: boolean, description: Closed short; the rest will not come. }
+    MovementType:
+      type: string
+      enum: [RECEIPT, ISSUE_MACHINE, ISSUE_GENERAL, TRANSFER_OUT, TRANSFER_IN, ADJUSTMENT]
+    StockMovement:
+      type: object
+      properties:
+        id: { type: integer }
+        created_at: { type: string, format: date-time }
+        type: { $ref: '#/components/schemas/MovementType' }
+        item:
+          type: object
+          properties:
+            id: { type: integer }
+            sku: { type: string }
+        site: { type: string }
+        qty_delta: { $ref: '#/components/schemas/Decimal', description: Positive in, negative out. }
+        unit_cost: { $ref: '#/components/schemas/Decimal' }
+        value: { $ref: '#/components/schemas/Decimal' }
+        qty_after: { $ref: '#/components/schemas/Decimal' }
+        avg_cost_after: { $ref: '#/components/schemas/Decimal' }
+        machine: { type: [string, 'null'], example: 004C }
+        counter_site: { type: [string, 'null'], description: The other site of a transfer. }
+        purchase_order: { type: [string, 'null'], example: PO-2026-0007 }
+        stock_count: { type: [string, 'null'], example: SC-2026-0002 }
+        transfer_group: { type: [string, 'null'], description: Shared by the two halves of a transfer. }
+        reason: { type: [string, 'null'], example: OPENING }
+        note: { type: [string, 'null'] }
+        recorded_by: { type: string }
